@@ -213,7 +213,7 @@ func (d *hotspotInstance) getSymbol(addr libpf.Address) string {
 	}
 	s := string(tmp)
 	if !util.IsValidString(s) {
-		log.Debugf("Extracted Hotspot symbol is invalid at 0x%x '%v'", addr, []byte(s))
+		log.Tracef("Extracted Hotspot symbol is invalid at 0x%x '%v'", addr, []byte(s))
 		return ""
 	}
 	d.addrToSymbol.Add(addr, s)
@@ -621,7 +621,7 @@ func (d *hotspotInstance) addJitArea(ebpf interpreter.EbpfHandler,
 		d.prefixes[prefix] = libpf.Void{}
 	}
 
-	log.Debugf("HotSpot jitArea: pid: %d, code %x-%x tsid: %x (%d tries)",
+	log.Tracef("HotSpot jitArea: pid: %d, code %x-%x tsid: %x (%d tries)",
 		pid, area.start, area.end, area.tsid, len(prefixes))
 
 	return nil

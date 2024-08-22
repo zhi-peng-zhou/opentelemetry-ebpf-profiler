@@ -199,7 +199,7 @@ func (pm *ProcessManager) handleNewInterpreter(pr process.Process, m *Mapping,
 			ei.Data, pid, err)
 	}
 
-	log.Debugf("Attached to %v interpreter in PID %v", ei.Data, pid)
+	log.Tracef("Attached to %v interpreter in PID %v", ei.Data, pid)
 	pm.assignInterpreter(pid, key, instance)
 
 	if tsdInfo := pm.getTSDInfo(pid); tsdInfo != nil {
@@ -327,7 +327,7 @@ func (pm *ProcessManager) processNewExecMapping(pr process.Process, mapping *pro
 		// process has exited already and the mapping file is unavailable
 		// or it is not an ELF file. Ignore these errors silently.
 		if !errors.Is(info.err, os.ErrNotExist) && !errors.Is(info.err, pfelf.ErrNotELF) {
-			log.Debugf("Failed to get ELF info for PID %d file %v: %v",
+			log.Tracef("Failed to get ELF info for PID %d file %v: %v",
 				pr.PID(), mapping.Path, info.err)
 		}
 		return
@@ -336,7 +336,7 @@ func (pm *ProcessManager) processNewExecMapping(pr process.Process, mapping *pro
 	// Get the virtual addresses for this mapping
 	elfSpaceVA, ok := info.addressMapper.FileOffsetToVirtualAddress(mapping.FileOffset)
 	if !ok {
-		log.Debugf("Failed to map file offset of PID %d, file %s, offset %d",
+		log.Tracef("Failed to map file offset of PID %d, file %s, offset %d",
 			pr.PID(), mapping.Path, mapping.FileOffset)
 		return
 	}
@@ -369,7 +369,7 @@ func (pm *ProcessManager) processRemovedMappings(pid util.PID, mappings []libpf.
 
 	for _, addr := range mappings {
 		if err := pm.deletePIDAddress(pid, addr); err != nil {
-			log.Debugf("Failed to handle native unmapping of 0x%x in PID %d: %v",
+			log.Tracef("Failed to handle native unmapping of 0x%x in PID %d: %v",
 				addr, pid, err)
 		}
 	}
@@ -379,7 +379,7 @@ func (pm *ProcessManager) processRemovedMappings(pid util.PID, mappings []libpf.
 	}
 
 	if _, ok := pm.interpreters[pid]; !ok {
-		log.Debugf("ProcessManager doesn't know about PID %d", pid)
+		log.Tracef("ProcessManager doesn't know about PID %d", pid)
 		return
 	}
 
@@ -471,7 +471,7 @@ func (pm *ProcessManager) synchronizeMappings(pr process.Process,
 				if alive, _ := proc.IsPIDLive(pid); alive {
 					log.Errorf("Failed to handle new anonymous mapping for PID %d: %v", pid, err)
 				} else {
-					log.Debugf("Failed to handle new anonymous mapping for PID %d: process exited",
+					log.Tracef("Failed to handle new anonymous mapping for PID %d: process exited",
 						pid)
 				}
 			}
@@ -480,7 +480,7 @@ func (pm *ProcessManager) synchronizeMappings(pr process.Process,
 	}
 
 	if len(mpAdd) > 0 || len(mpRemove) > 0 {
-		log.Debugf("Added %v mappings, removed %v mappings for PID: %v",
+		log.Tracef("Added %v mappings, removed %v mappings for PID: %v",
 			len(mpAdd), len(mpRemove), pid)
 	}
 	return newProcess
@@ -493,7 +493,7 @@ func (pm *ProcessManager) synchronizeMappings(pr process.Process,
 // fast enough and this particular pid is reused again by the system.
 // NOTE: Exported only for tracer.
 func (pm *ProcessManager) ProcessPIDExit(pid util.PID) bool {
-	log.Debugf("- PID: %v", pid)
+	log.Tracef("- PID: %v", pid)
 	defer pm.ebpf.RemoveReportedPID(pid)
 
 	pm.mu.Lock()
@@ -510,7 +510,7 @@ func (pm *ProcessManager) ProcessPIDExit(pid util.PID) bool {
 
 	info, ok := pm.pidToProcessInfo[pid]
 	if !ok {
-		log.Debugf("Skip process exit handling for unknown PID %d", pid)
+		log.Tracef("Skip process exit handling for unknown PID %d", pid)
 		return symbolize
 	}
 
@@ -535,7 +535,7 @@ func (pm *ProcessManager) ProcessPIDExit(pid util.PID) bool {
 
 func (pm *ProcessManager) SynchronizeProcess(pr process.Process) {
 	pid := pr.PID()
-	log.Debugf("= PID: %v", pid)
+	log.Tracef("= PID: %v", pid)
 
 	pm.mappingStats.numProcAttempts.Add(1)
 	start := time.Now()
@@ -588,7 +588,7 @@ func (pm *ProcessManager) SynchronizeProcess(pr process.Process) {
 	pm.mappingStats.totalProcParseUsec.Add(uint32(elapsed.Microseconds()))
 
 	if pm.synchronizeMappings(pr, mappings) {
-		log.Debugf("+ PID: %v", pid)
+		log.Tracef("+ PID: %v", pid)
 		// TODO: Fine-grained reported_pids handling (evaluate per-PID mapping
 		// synchronization based on per-PID state such as time since last
 		// synchronization). Currently we only remove a PID from reported_pids
@@ -622,6 +622,6 @@ func (pm *ProcessManager) CleanupPIDs() {
 	}
 
 	if len(deadPids) > 0 {
-		log.Debugf("Cleaned up %d dead PIDs", len(deadPids))
+		log.Tracef("Cleaned up %d dead PIDs", len(deadPids))
 	}
 }

@@ -270,7 +270,7 @@ func (pm *ProcessManager) ConvertTrace(trace *host.Trace) (newTrace *libpf.Trace
 
 			fileID, ok := pm.FileIDMapper.Get(frame.File)
 			if !ok {
-				log.Debugf(
+				log.Tracef(
 					"file ID lookup failed for PID %d, frame %d/%d, frame type %d",
 					trace.PID, i, traceLen, frame.Type)
 
@@ -284,7 +284,7 @@ func (pm *ProcessManager) ConvertTrace(trace *host.Trace) (newTrace *libpf.Trace
 		default:
 			err := pm.symbolizeFrame(i, trace, newTrace)
 			if err != nil {
-				log.Debugf(
+				log.Tracef(
 					"symbolization failed for PID %d, frame %d/%d, frame type %d: %v",
 					trace.PID, i, traceLen, frame.Type, err)
 
@@ -363,7 +363,7 @@ func (pm *ProcessManager) SymbolizationComplete(traceCaptureKTime times.KTime) {
 		delete(pm.interpreters, pid)
 		delete(pm.exitEvents, pid)
 
-		log.Debugf("PID %v exit latency %v ms", pid, (nowKTime-pidExitKTime)/1e6)
+		log.Tracef("PID %v exit latency %v ms", pid, (nowKTime-pidExitKTime)/1e6)
 	}
 }
 

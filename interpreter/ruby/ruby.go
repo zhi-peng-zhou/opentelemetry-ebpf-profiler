@@ -679,7 +679,7 @@ func (r *rubyInstance) Symbolize(symbolReporter reporter.SymbolReporter,
 		return err
 	}
 	if !util.IsValidString(sourceFileName) {
-		log.Debugf("Extracted invalid Ruby source file name at 0x%x '%v'",
+		log.Tracef("Extracted invalid Ruby source file name at 0x%x '%v'",
 			iseqBody, []byte(sourceFileName))
 		return fmt.Errorf("extracted invalid Ruby source file name from address 0x%x",
 			iseqBody)
@@ -692,7 +692,7 @@ func (r *rubyInstance) Symbolize(symbolReporter reporter.SymbolReporter,
 		return err
 	}
 	if !util.IsValidString(functionName) {
-		log.Debugf("Extracted invalid Ruby method name at 0x%x '%v'",
+		log.Tracef("Extracted invalid Ruby method name at 0x%x '%v'",
 			iseqBody, []byte(functionName))
 		return fmt.Errorf("extracted invalid Ruby method name from address 0x%x",
 			iseqBody)
@@ -728,7 +728,7 @@ func (r *rubyInstance) Symbolize(symbolReporter reporter.SymbolReporter,
 		libpf.AddressOrLineno(lineNo), util.SourceLineno(lineNo), 0,
 		functionName, sourceFileName)
 
-	log.Debugf("[%d] [%x] %v+%v at %v:%v", len(trace.FrameTypes),
+	log.Tracef("[%d] [%x] %v+%v at %v:%v", len(trace.FrameTypes),
 		iseq.fileID,
 		functionName, 0,
 		sourceFileName, lineNo)

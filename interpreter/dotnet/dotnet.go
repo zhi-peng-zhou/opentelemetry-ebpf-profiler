@@ -171,7 +171,7 @@ func Loader(_ interpreter.EbpfHandler, info *interpreter.LoaderInfo) (interprete
 		return nil, err
 	}
 
-	log.Debugf("Dotnet DAC table at %x", addr)
+	log.Tracef("Dotnet DAC table at %x", addr)
 
 	d := &dotnetData{
 		version:      version,

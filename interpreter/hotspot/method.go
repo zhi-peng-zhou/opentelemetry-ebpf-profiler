@@ -67,7 +67,7 @@ func (m *hotspotMethod) symbolize(symbolReporter reporter.SymbolReporter, bci in
 	// Until the reporting API gets a way to notify failures, just assume it worked.
 	m.bciSeen[uint16(bci)] = libpf.Void{}
 
-	log.Debugf("[%d] [%x] %v+%v at %v:%v", len(trace.FrameTypes),
+	log.Tracef("[%d] [%x] %v+%v at %v:%v", len(trace.FrameTypes),
 		m.objectID,
 		m.methodName, functionOffset,
 		m.sourceFileName, lineNo)

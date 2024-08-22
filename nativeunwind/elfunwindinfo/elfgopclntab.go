@@ -16,9 +16,9 @@ import (
 	"fmt"
 	"unsafe"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
 	sdtypes "github.com/toliu/opentelemetry-ebpf-profiler/nativeunwind/stackdeltatypes"
-	log "github.com/sirupsen/logrus"
 )
 
 // Go runtime functions for which we should not attempt to unwind further
@@ -625,7 +625,7 @@ func parseX86pclntabFunc(deltas *sdtypes.StackDeltaArray, fun *pclntabFunc, data
 			hints = sdtypes.UnwindHintNone
 		}
 	}
-	log.Debugf("Unhandled .gopclntab func at %d", i)
+	log.Tracef("Unhandled .gopclntab func at %d", i)
 	return nil
 }
 

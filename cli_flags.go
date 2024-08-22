@@ -165,8 +165,8 @@ func parseArgs() (*arguments, error) {
 }
 
 func (args *arguments) dump() {
-	log.Debug("Config:")
+	log.Trace("Config:")
 	args.fs.VisitAll(func(f *flag.Flag) {
-		log.Debug(fmt.Sprintf("%s: %v", f.Name, f.Value))
+		log.Trace(fmt.Sprintf("%s: %v", f.Name, f.Value))
 	})
 }

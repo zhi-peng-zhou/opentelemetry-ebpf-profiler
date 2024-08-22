@@ -307,13 +307,13 @@ func Loader(ebpf interpreter.EbpfHandler, info *interpreter.LoaderInfo) (interpr
 		var vmKind uint
 		vmKind, err = determineVMKind(ef)
 		if err != nil {
-			log.Debugf("PHP version %x: an error occurred while determining "+
+			log.Tracef("PHP version %x: an error occurred while determining "+
 				"the VM kind (%v)",
 				version, err)
 		} else if vmKind == ZEND_VM_KIND_HYBRID {
 			rtAddr, err = recoverExecuteExJumpLabelAddress(ef)
 			if err != nil {
-				log.Debugf("PHP version %x: an error occurred while determining "+
+				log.Tracef("PHP version %x: an error occurred while determining "+
 					"the return address for execute_ex: (%v)", version, err)
 			}
 		}

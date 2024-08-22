@@ -223,7 +223,7 @@ func walkLocationTable(m *pythonCodeObject, bci uint32) uint32 {
 	for curI <= bci {
 		firstByte, err := r.ReadByte()
 		if err != nil || firstByte&0x80 == 0 {
-			log.Debugf("first byte: sync lost (%x) or error: %v",
+			log.Tracef("first byte: sync lost (%x) or error: %v",
 				firstByte, err)
 			return 0
 		}
@@ -257,7 +257,7 @@ func walkLocationTable(m *pythonCodeObject, bci uint32) uint32 {
 			// PY_CODE_LOCATION_INFO_NONE does not hold line information
 			line = -1
 		default:
-			log.Debugf("Unexpected PyCodeLocationInfoKind %d", code)
+			log.Tracef("Unexpected PyCodeLocationInfoKind %d", code)
 			return 0
 		}
 	}
@@ -343,7 +343,7 @@ func (m *pythonCodeObject) symbolize(symbolReporter reporter.SymbolReporter, bci
 	// Until the reporting API gets a way to notify failures, just assume it worked.
 	m.bciSeen[bci] = libpf.Void{}
 
-	log.Debugf("[%d] [%x] %v+%v at %v:%v (bci %d)", len(trace.FrameTypes),
+	log.Tracef("[%d] [%x] %v+%v at %v:%v (bci %d)", len(trace.FrameTypes),
 		m.fileID,
 		m.name, functionOffset,
 		m.sourceFileName, lineNo, bci)
@@ -530,7 +530,7 @@ func (p *pythonInstance) getCodeObject(addr libpf.Address,
 		name = p.rm.String(data + npsr.Ptr(cobj, vms.PyCodeObject.Name))
 	}
 	if !util.IsValidString(name) {
-		log.Debugf("Extracted invalid Python method/function name at 0x%x '%v'",
+		log.Tracef("Extracted invalid Python method/function name at 0x%x '%v'",
 			addr, []byte(name))
 		return nil, fmt.Errorf("extracted invalid Python method/function name from address 0x%x",
 			addr)
@@ -545,7 +545,7 @@ func (p *pythonInstance) getCodeObject(addr libpf.Address,
 		sourceFileName = sourcePath
 	}
 	if !util.IsValidString(sourceFileName) {
-		log.Debugf("Extracted invalid Python source file name at 0x%x '%v'",
+		log.Tracef("Extracted invalid Python source file name at 0x%x '%v'",
 			addr, []byte(sourceFileName))
 		return nil, fmt.Errorf("extracted invalid Python source file name from address 0x%x",
 			addr)

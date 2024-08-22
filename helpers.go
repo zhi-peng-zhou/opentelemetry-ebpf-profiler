@@ -121,7 +121,7 @@ func getSourceIPAddress(domain string) (net.IP, error) {
 		return nil, fmt.Errorf("no route found to %s: %v", domain, lastError)
 	}
 
-	log.Debugf("Traffic to %v is routed from %v", domain, srcIP.String())
+	log.Tracef("Traffic to %v is routed from %v", domain, srcIP.String())
 	return srcIP, nil
 }
 

@@ -61,7 +61,7 @@ func (m *dotnetMethod) mapPCOffsetToILOffset(pcOffset uint32, findCall bool) uin
 	nr := nibbleReader{ByteReader: r}
 	numEntries := nr.Uint32()
 
-	log.Debugf("finding method index=%d, pcOffset=%d, callCall=%v, numEntries=%v",
+	log.Tracef("finding method index=%d, pcOffset=%d, callCall=%v, numEntries=%v",
 		m.index, pcOffset, findCall, numEntries)
 
 	// Decode Bounds Info portion of DebugInfo
@@ -74,11 +74,11 @@ func (m *dotnetMethod) mapPCOffsetToILOffset(pcOffset uint32, findCall bool) uin
 		if findCall && nativeOffset >= pcOffset {
 			// If finding call site, always return lastCallILOffset.
 			// This will be zero if there are no CALL_INSTRUCTION boundary info.
-			log.Debugf("  returning %#x as last call site (next entry's native offset %d)",
+			log.Tracef("  returning %#x as last call site (next entry's native offset %d)",
 				lastCallILOffset, nativeOffset)
 			return lastCallILOffset
 		} else if nativeOffset > pcOffset {
-			log.Debugf("  returning %#x (next entry's native offset %d)",
+			log.Tracef("  returning %#x (next entry's native offset %d)",
 				ilOffset, nativeOffset)
 			return ilOffset
 		}
@@ -96,7 +96,7 @@ func (m *dotnetMethod) mapPCOffsetToILOffset(pcOffset uint32, findCall bool) uin
 		}
 
 		// NOTE: _DEBUG builds could have a 0xA nibble to identify row change.
-		log.Debugf(" %3d, native %3d -> IL %#03x, sourceFlags %#x",
+		log.Tracef(" %3d, native %3d -> IL %#03x, sourceFlags %#x",
 			i, nativeOffset, ilOffset, sourceFlags)
 	}
 	return uint32(0)
@@ -107,7 +107,7 @@ func (m *dotnetMethod) dumpBounds() {
 	nr := nibbleReader{ByteReader: r}
 	numEntries := nr.Uint32()
 
-	log.Debugf("dumping method index=%d, numEntries=%v", m.index, numEntries)
+	log.Tracef("dumping method index=%d, numEntries=%v", m.index, numEntries)
 
 	// Decode Bounds Info portion of DebugInfo
 	// https://github.com/dotnet/runtime/blob/main/src/coreclr/vm/debuginfostore.cpp#L289-L310
@@ -118,7 +118,7 @@ func (m *dotnetMethod) dumpBounds() {
 		sourceFlags := nr.Uint32()
 		// NOTE: _DEBUG builds could have a 0xA nibble to identify row change.
 
-		log.Debugf(" %3d, native %3d -> IL %#03x, sourceFlags %#x",
+		log.Tracef(" %3d, native %3d -> IL %#03x, sourceFlags %#x",
 			i, nativeOffset, ilOffset, sourceFlags)
 	}
 }
@@ -127,7 +127,7 @@ func dumpRichDebugInfo(richInfo []byte) {
 	nr := nibbleReader{ByteReader: bytes.NewReader(richInfo)}
 	numInlineTree := nr.Uint32()
 	numRichOffsets := nr.Uint32()
-	log.Debugf("debug info: rich debug %d bytes, %d inlines, %d offsets",
+	log.Tracef("debug info: rich debug %d bytes, %d inlines, %d offsets",
 		len(richInfo), numInlineTree, numRichOffsets)
 
 	// Decode Rich Debug info's Inline Tree Nodes
@@ -138,7 +138,7 @@ func dumpRichDebugInfo(richInfo []byte) {
 		ilOffset += nr.Int32()
 		child += nr.Int32()
 		sibling += nr.Int32()
-		log.Debugf("  il %03d child %d sibling %x handle %x",
+		log.Tracef("  il %03d child %d sibling %x handle %x",
 			ilOffset, child, sibling, ptr)
 	}
 
@@ -152,7 +152,7 @@ func dumpRichDebugInfo(richInfo []byte) {
 		inlinee += nr.Int32()
 		ilOffset += nr.Int32()
 		sourceFlags := nr.Uint32()
-		log.Debugf("  native %d IL %x inlinee %d flags %x",
+		log.Tracef("  native %d IL %x inlinee %d flags %x",
 			nativeOffset, ilOffset, inlinee, sourceFlags)
 	}
 }
@@ -181,7 +181,7 @@ func (m *dotnetMethod) readDebugInfo(r *cachingReader, d *dotnetData) error {
 		}
 		numLocals := npsr.Uint32(patchpointInfo, vms.PatchpointInfo.NumberOfLocals)
 		r.Skip(int(numLocals * 4))
-		log.Debugf("debug info: skipped patchpoint info with %d locals", numLocals)
+		log.Tracef("debug info: skipped patchpoint info with %d locals", numLocals)
 	}
 	if flags&extraDebugInfoRich != 0 {
 		// https://github.com/dotnet/runtime/blob/main/src/coreclr/vm/debuginfostore.cpp#L748-L754
@@ -219,7 +219,7 @@ func (m *dotnetMethod) readDebugInfo(r *cachingReader, d *dotnetData) error {
 	if err := nr.Error(); err != nil {
 		return fmt.Errorf("failed to read bounds header: %w", err)
 	}
-	log.Debugf("debug info: bounds size %d, vars size %d", numBytesBounds, numBytesVars)
+	log.Tracef("debug info: bounds size %d, vars size %d", numBytesBounds, numBytesVars)
 	if numBytesBounds > maxBoundsSize {
 		return fmt.Errorf("boundary debug info size %d is too large", numBytesBounds)
 	}
