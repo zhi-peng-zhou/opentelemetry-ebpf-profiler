@@ -1,10 +1,10 @@
-module go.opentelemetry.io/ebpf-profiler
+module github.com/toliu/opentelemetry-ebpf-profiler
 
 go 1.22.2
 
 require (
+	github.com/aws/aws-sdk-go-v2 v1.30.5
 	github.com/aws/aws-sdk-go-v2/config v1.27.35
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.21
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.62.0
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/cilium/ebpf v0.16.0
@@ -29,7 +29,6 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2 v1.30.5 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.4 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.33 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.13 // indirect

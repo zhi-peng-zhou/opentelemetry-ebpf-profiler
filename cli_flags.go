@@ -11,8 +11,8 @@ import (
 
 	"github.com/peterbourgon/ff/v3"
 
-	"go.opentelemetry.io/ebpf-profiler/internal/controller"
-	"go.opentelemetry.io/ebpf-profiler/tracer"
+	"github.com/toliu/opentelemetry-ebpf-profiler/internal/controller"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracer"
 )
 
 const (

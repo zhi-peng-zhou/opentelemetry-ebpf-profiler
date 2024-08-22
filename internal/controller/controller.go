@@ -1,4 +1,4 @@
-package controller // import "go.opentelemetry.io/ebpf-profiler/internal/controller"
+package controller // import "github.com/toliu/opentelemetry-ebpf-profiler/internal/controller"
 
 import (
 	"context"
@@ -8,16 +8,16 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tklauser/numcpus"
 
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/hostmetadata"
-	"go.opentelemetry.io/ebpf-profiler/internal/helpers"
-	"go.opentelemetry.io/ebpf-profiler/metrics"
-	"go.opentelemetry.io/ebpf-profiler/reporter"
-	"go.opentelemetry.io/ebpf-profiler/times"
-	"go.opentelemetry.io/ebpf-profiler/tracehandler"
-	"go.opentelemetry.io/ebpf-profiler/tracer"
-	tracertypes "go.opentelemetry.io/ebpf-profiler/tracer/types"
-	"go.opentelemetry.io/ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/hostmetadata"
+	"github.com/toliu/opentelemetry-ebpf-profiler/internal/helpers"
+	"github.com/toliu/opentelemetry-ebpf-profiler/metrics"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/times"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracehandler"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracer"
+	tracertypes "github.com/toliu/opentelemetry-ebpf-profiler/tracer/types"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 )
 
 const MiB = 1 << 20

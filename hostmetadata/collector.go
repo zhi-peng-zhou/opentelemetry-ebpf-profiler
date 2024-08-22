@@ -1,13 +1,13 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package hostmetadata // import "go.opentelemetry.io/ebpf-profiler/hostmetadata"
+package hostmetadata // import "github.com/toliu/opentelemetry-ebpf-profiler/hostmetadata"
 
 import (
 	"context"
 	"time"
 
-	"go.opentelemetry.io/ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
 )
 
 // Collector implements host metadata collection and reporting

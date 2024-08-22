@@ -3,7 +3,7 @@
 
 // package pfelf implements functions for processing of ELF files and extracting data from
 // them. This file provides convenience functions for golang debug/elf standard library.
-package pfelf // import "go.opentelemetry.io/ebpf-profiler/libpf/pfelf"
+package pfelf // import "github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 	"regexp"
 	"strings"
 
-	"go.opentelemetry.io/ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 )
 
 // SafeOpenELF opens the given ELF file in a safely way in that

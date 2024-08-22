@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 	semconv "go.opentelemetry.io/otel/semconv/v1.25.0"
 	common "go.opentelemetry.io/proto/otlp/common/v1"
 	profiles "go.opentelemetry.io/proto/otlp/profiles/v1experimental"
