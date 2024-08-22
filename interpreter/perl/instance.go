@@ -259,7 +259,7 @@ func (i *perlInstance) getHEK(addr libpf.Address) (string, error) {
 	}
 	s := string(tmp)
 	if !util.IsValidString(s) {
-		log.Debugf("Extracted invalid hek string at 0x%x '%v'", addr, []byte(s))
+		log.Tracef("Extracted invalid hek string at 0x%x '%v'", addr, []byte(s))
 		return "", fmt.Errorf("extracted invalid hek string at 0x%x", addr)
 	}
 	i.addrToHEK.Add(addr, s)
@@ -398,7 +398,7 @@ func (i *perlInstance) getCOP(copAddr libpf.Address, funcName string) (*perlCOP,
 		sourceFileName = sourceFileName[2:]
 	}
 	if !util.IsValidString(sourceFileName) {
-		log.Debugf("Extracted invalid source file name '%v'", []byte(sourceFileName))
+		log.Tracef("Extracted invalid source file name '%v'", []byte(sourceFileName))
 		return nil, errors.New("extracted invalid source file name")
 	}
 

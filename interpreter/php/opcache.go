@@ -217,7 +217,7 @@ func (i *opcacheInstance) SynchronizeMappings(ebpf interpreter.EbpfHandler,
 
 	prefixes, err := lpm.CalculatePrefixList(dasmBuf, dasmBuf+dasmSize)
 	if err != nil {
-		log.Debugf("Producing prefixes failed: %v", err)
+		log.Tracef("Producing prefixes failed: %v", err)
 		return err
 	}
 

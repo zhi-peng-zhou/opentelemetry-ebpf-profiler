@@ -666,7 +666,7 @@ func (st *state) step(r *reader) error {
 				err = st.cur.cfa.expression(expr)
 			}
 			if err != nil {
-				log.Debugf("DWARF expression error (CFA): %v", err)
+				log.Tracef("DWARF expression error (CFA): %v", err)
 			}
 		case cfaExpression:
 			reg := r.uleb()
@@ -674,7 +674,7 @@ func (st *state) step(r *reader) error {
 			if r := st.cur.reg(reg); err == nil && r != nil {
 				err = r.expression(expr)
 				if err != nil && reg == x86RegRBP {
-					log.Debugf("DWARF expression error (RBP): %v", err)
+					log.Tracef("DWARF expression error (RBP): %v", err)
 				}
 			}
 		case cfaOffsetExtendedSf:
@@ -1115,7 +1115,7 @@ func findEhSections(ef *pfelf.File) (
 	// coredump binaries and other ELF files that have the section headers stripped.
 	prog, err := ef.EHFrame()
 	if err != nil {
-		log.Debugf("No PT_GNU_EH_FRAME dynamic tag: %v", err)
+		log.Tracef("No PT_GNU_EH_FRAME dynamic tag: %v", err)
 		return nil, nil, nil
 	}
 

@@ -302,7 +302,7 @@ func (impl *ebpfMapsImpl) getInterpreterTypeMap(typ libpf.InterpreterType) (*ceb
 // UpdateProcData adds the given PID specific data to the specified interpreter data eBPF map.
 func (impl *ebpfMapsImpl) UpdateProcData(typ libpf.InterpreterType, pid libpf.PID,
 	data unsafe.Pointer) error {
-	log.Debugf("Loading symbol addresses into eBPF map for PID %d type %d",
+	log.Tracef("Loading symbol addresses into eBPF map for PID %d type %d",
 		pid, typ)
 	ebpfMap, err := impl.getInterpreterTypeMap(typ)
 	if err != nil {
@@ -318,7 +318,7 @@ func (impl *ebpfMapsImpl) UpdateProcData(typ libpf.InterpreterType, pid libpf.PI
 
 // DeleteProcData removes the given PID specific data of the specified interpreter data eBPF map.
 func (impl *ebpfMapsImpl) DeleteProcData(typ libpf.InterpreterType, pid libpf.PID) error {
-	log.Debugf("Removing symbol addresses from eBPF map for PID %d type %d",
+	log.Tracef("Removing symbol addresses from eBPF map for PID %d type %d",
 		pid, typ)
 	ebpfMap, err := impl.getInterpreterTypeMap(typ)
 	if err != nil {

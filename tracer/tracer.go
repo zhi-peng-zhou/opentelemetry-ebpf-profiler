@@ -253,7 +253,7 @@ func calcFallbackModuleID(moduleSym libpf.Symbol, kernelSymbols *libpf.SymbolMap
 		panic("calcFallbackModuleID file ID construction is broken")
 	}
 
-	log.Debugf("Fallback module ID for module %s is '%s' (min addr: 0x%08X, num exports: %d)",
+	log.Tracef("Fallback module ID for module %s is '%s' (min addr: 0x%08X, num exports: %d)",
 		moduleSym.Name, fileID.Base64(), minAddr, len(moduleSymbols))
 
 	return fileID
@@ -490,7 +490,7 @@ func loadAllMaps(coll *cebpf.CollectionSpec, ebpfMaps map[string]*cebpf.Map,
 
 	for mapName, mapSpec := range coll.Maps {
 		if newSize, ok := adaption[mapName]; ok {
-			log.Debugf("Size of eBPF map %s: %v", mapName, newSize)
+			log.Tracef("Size of eBPF map %s: %v", mapName, newSize)
 			mapSpec.MaxEntries = newSize
 		}
 		ebpfMap, err := cebpf.NewMap(mapSpec)
@@ -733,7 +733,7 @@ func (t *Tracer) monitorPIDEventsMap(keys *[]uint32) {
 	key = 0
 	if err := eventsMap.NextKey(unsafe.Pointer(&key), unsafe.Pointer(&nextKey)); err != nil {
 		if errors.Is(err, cebpf.ErrKeyNotExist) {
-			log.Debugf("Empty pid_events map")
+			log.Trace("Empty pid_events map")
 			return
 		}
 		log.Fatalf("Failed to read from pid_events map: %v", err)
@@ -923,7 +923,7 @@ func (t *Tracer) StartMapMonitors(ctx context.Context, traceOutChan chan *host.T
 			t.monitorPIDEventsMap(&pidEvents)
 
 			for _, ev := range pidEvents {
-				log.Debugf("=> PID: %v", ev)
+				log.Tracef("=> PID: %v", ev)
 				t.pidEvents <- libpf.PID(ev)
 			}
 
@@ -1111,9 +1111,9 @@ func (t *Tracer) probabilisticProfile(interval time.Duration, threshold uint) {
 	if rand.UintN(ProbabilisticThresholdMax) < threshold {
 		enableSampling = true
 		probProfilingStatus = probProfilingEnable
-		log.Debugf("Start sampling for next interval (%v)", interval)
+		log.Tracef("Start sampling for next interval (%v)", interval)
 	} else {
-		log.Debugf("Stop sampling for next interval (%v)", interval)
+		log.Tracef("Stop sampling for next interval (%v)", interval)
 	}
 
 	events := t.perfEntrypoints.WLock()

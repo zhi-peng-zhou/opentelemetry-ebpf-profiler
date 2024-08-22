@@ -102,7 +102,7 @@ func GetKernelModules(modulesPath string,
 	if err != nil {
 		return nil, fmt.Errorf("unable to find kernel text section end: %v", err)
 	}
-	log.Debugf("Found KERNEL TEXT at %x-%x", stext.Address, etext.Address)
+	log.Tracef("Found KERNEL TEXT at %x-%x", stext.Address, etext.Address)
 	symmap.Add(libpf.Symbol{
 		Name:    "vmlinux",
 		Address: stext.Address,

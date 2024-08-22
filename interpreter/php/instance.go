@@ -127,7 +127,7 @@ func (i *phpInstance) getFunction(addr libpf.Address, typeInfo uint32) (*phpFunc
 	fname := i.rm.String(npsr.Ptr(fobj, vms.zend_function.common_funcname) + vms.zend_string.val)
 
 	if fname != "" && !util.IsValidString(fname) {
-		log.Debugf("Extracted invalid PHP function name at 0x%x '%v'", addr, []byte(fname))
+		log.Tracef("Extracted invalid PHP function name at 0x%x '%v'", addr, []byte(fname))
 		fname = ""
 	}
 
@@ -148,7 +148,7 @@ func (i *phpInstance) getFunction(addr libpf.Address, typeInfo uint32) (*phpFunc
 		sourceAddr := npsr.Ptr(fobj, vms.zend_function.op_array_filename)
 		sourceFileName = i.rm.String(sourceAddr + vms.zend_string.val)
 		if !util.IsValidString(sourceFileName) {
-			log.Debugf("Extracted invalid PHP source file name at 0x%x '%v'",
+			log.Tracef("Extracted invalid PHP source file name at 0x%x '%v'",
 				addr, []byte(sourceFileName))
 			sourceFileName = ""
 		}
