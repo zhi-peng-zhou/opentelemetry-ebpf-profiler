@@ -622,7 +622,7 @@ func parseX86pclntabFunc(deltas *sdtypes.StackDeltaArray, fun *pclntabFunc, data
 			hints = sdtypes.UnwindHintNone
 		}
 	}
-	log.Debugf("Unhandled .gopclntab func at %d", i)
+	log.Tracef("Unhandled .gopclntab func at %d", i)
 	return nil
 }
 

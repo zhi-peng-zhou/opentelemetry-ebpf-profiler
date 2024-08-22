@@ -100,7 +100,7 @@ func mainWithExitCode() exitCode {
 	}
 
 	if args.verboseMode {
-		log.SetLevel(log.DebugLevel)
+		log.SetLevel(log.TraceLevel)
 		// Dump the arguments in debug mode.
 		args.dump()
 	}
@@ -148,7 +148,7 @@ func mainWithExitCode() exitCode {
 	// Start periodic synchronization with the realtime clock
 	times.StartRealtimeSync(mainCtx, args.clockSyncInterval)
 
-	log.Debugf("Determining tracers to include")
+	log.Tracef("Determining tracers to include")
 	includeTracers, err := tracertypes.Parse(args.tracers)
 	if err != nil {
 		return failure("Failed to parse the included tracers: %v", err)
@@ -225,7 +225,7 @@ func mainWithExitCode() exitCode {
 		log.Errorf("Failed to list processes from /proc: %v", err)
 	}
 	metrics.Add(metrics.IDProcPIDStartupMs, metrics.MetricValue(time.Since(now).Milliseconds()))
-	log.Debug("Completed initial PID listing")
+	log.Trace("Completed initial PID listing")
 
 	// Attach our tracer to the perf event
 	if err := trc.AttachTracer(); err != nil {

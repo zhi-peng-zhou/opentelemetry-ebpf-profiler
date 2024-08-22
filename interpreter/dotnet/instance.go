@@ -187,7 +187,7 @@ func (i *dotnetInstance) addRange(ebpf interpreter.EbpfHandler, pid libpf.PID,
 	// Inform the unwinder about this range
 	prefixes, err := lpm.CalculatePrefixList(uint64(lowAddress), uint64(highAddress))
 	if err != nil {
-		log.Debugf("Failed to calculate lpm: %v", err)
+		log.Tracef("Failed to calculate lpm: %v", err)
 		return
 	}
 
@@ -207,7 +207,7 @@ func (i *dotnetInstance) addRange(ebpf interpreter.EbpfHandler, pid libpf.PID,
 		err := ebpf.UpdatePidInterpreterMapping(pid, prefix, support.ProgUnwindDotnet,
 			host.FileID(stubTypeOrHdrMap), uint64(mapBase))
 		if err != nil {
-			log.Debugf("Failed to update interpreter mapping: %v", err)
+			log.Tracef("Failed to update interpreter mapping: %v", err)
 		}
 	}
 }
@@ -224,11 +224,11 @@ func (i *dotnetInstance) walkRangeList(ebpf interpreter.EbpfHandler, pid libpf.P
 
 	flagLeaf := uint(0)
 	stubName := codeName[codeType]
-	log.Debugf("Found %s stub range list head at %x", stubName, headPtr)
+	log.Tracef("Found %s stub range list head at %x", stubName, headPtr)
 	blockNum := 0
 	for blockPtr := headPtr + 0x8; blockPtr != 0; blockNum++ {
 		if err := i.rm.Read(blockPtr, block); err != nil {
-			log.Debugf("Failed to read %s stub range block %d: %v",
+			log.Tracef("Failed to read %s stub range block %d: %v",
 				stubName, blockNum, err)
 			return
 		}
@@ -242,7 +242,7 @@ func (i *dotnetInstance) walkRangeList(ebpf interpreter.EbpfHandler, pid libpf.P
 			if _, ok := i.ranges[startAddr]; ok {
 				continue
 			}
-			log.Debugf("pid %d: %s: %d/%d: rangeList %x-%x id %x",
+			log.Tracef("pid %d: %s: %d/%d: rangeList %x-%x id %x",
 				pid, stubName, blockNum, index, startAddr, endAddr, id)
 			i.addRange(ebpf, pid, startAddr, endAddr, startAddr, uint64(codeType|flagLeaf))
 		}
@@ -267,7 +267,7 @@ func (i *dotnetInstance) addRangeSection(ebpf interpreter.EbpfHandler, pid libpf
 		rangeListPtr := npsr.Ptr(rangeSection, vms.RangeSection.RangeList)
 		stubKind := i.rm.Uint32(rangeListPtr +
 			libpf.Address(vms.CodeRangeMapRangeList.RangeListType))
-		log.Debugf("%x-%x flags:%x  rangeListPtr %#x, type %d",
+		log.Tracef("%x-%x flags:%x  rangeListPtr %#x, type %d",
 			lowAddress, highAddress, flags,
 			rangeListPtr, stubKind)
 		i.addRange(ebpf, pid, lowAddress, highAddress, lowAddress, uint64(stubKind))
@@ -281,7 +281,7 @@ func (i *dotnetInstance) addRangeSection(ebpf interpreter.EbpfHandler, pid libpf
 		heapListPtr := npsr.Ptr(rangeSection, vms.RangeSection.HeapList)
 
 		if err := i.rm.Read(heapListPtr, heapList); err != nil {
-			log.Debugf("Failed to read heapList at %#x", heapListPtr)
+			log.Tracef("Failed to read heapList at %#x", heapListPtr)
 			return err
 		}
 		mapBase := npsr.Ptr(heapList, vms.HeapList.MapBase)
@@ -290,7 +290,7 @@ func (i *dotnetInstance) addRangeSection(ebpf interpreter.EbpfHandler, pid libpf
 		heapStart := npsr.Ptr(heapList, vms.HeapList.StartAddress)
 		heapEnd := npsr.Ptr(heapList, vms.HeapList.EndAddress)
 
-		log.Debugf("%x-%x flags:%x  heap: next:%x %x-%x mapBase: %x headerMap: %x",
+		log.Tracef("%x-%x flags:%x  heap: next:%x %x-%x mapBase: %x headerMap: %x",
 			lowAddress, highAddress, flags,
 			heapListPtr, heapStart, heapEnd, mapBase, hdrMap)
 
@@ -306,7 +306,7 @@ func (i *dotnetInstance) addRangeSection(ebpf interpreter.EbpfHandler, pid libpf
 			return nil
 		}
 		i.moduleToPEInfo[modulePtr] = info
-		log.Debugf("%x-%x flags:%x  module: %x -> %s",
+		log.Tracef("%x-%x flags:%x  module: %x -> %s",
 			lowAddress, highAddress, flags,
 			modulePtr, info.simpleName)
 		i.addRange(ebpf, pid, lowAddress, highAddress, lowAddress, codeReadyToRun)
@@ -464,7 +464,7 @@ func (i *dotnetInstance) readMethod(methodDescPtr libpf.Address,
 		libpf.Address(chunkIndex)*libpf.Address(vms.MethodDesc.Alignment) -
 		libpf.Address(vms.MethodDescChunk.SizeOf)
 
-	log.Debugf("method @%x: classification '%v', tokenRemainder %x, chunkIndex %x -> chunkPtr %x",
+	log.Tracef("method @%x: classification '%v', tokenRemainder %x, chunkIndex %x -> chunkPtr %x",
 		methodClassficationName[classification], methodDescPtr,
 		tokenRemainder, chunkIndex, methodDescChunkPtr)
 
@@ -480,7 +480,7 @@ func (i *dotnetInstance) readMethod(methodDescPtr libpf.Address,
 	// Merge the MethodDesc and MethodDescChunk bits of Token value
 	// https://github.com/dotnet/runtime/blob/main/src/coreclr/vm/method.hpp#L76-L80
 	index := uint32(tokenRange)<<vms.MethodDesc.TokenRemainderBits + uint32(tokenRemainder)
-	log.Debugf("methodchunk @%x: methodTablePtr %x: tokenRange %d, tokenRemainder %d -> index %d",
+	log.Tracef("methodchunk @%x: methodTablePtr %x: tokenRange %d, tokenRemainder %d -> index %d",
 		methodDescChunkPtr, methodTablePtr, tokenRange, tokenRemainder, index)
 
 	// Extract the loader module from the associated MethodTable
@@ -501,7 +501,7 @@ func (i *dotnetInstance) readMethod(methodDescPtr libpf.Address,
 	if debugInfoPtr != 0 {
 		if err := method.readDebugInfo(newCachingReader(i.rm, int64(debugInfoPtr),
 			1024), i.d); err != nil {
-			log.Debugf("debug info reading failed: %v", err)
+			log.Tracef("debug info reading failed: %v", err)
 		}
 	}
 	return method, nil
@@ -569,10 +569,10 @@ func (i *dotnetInstance) SynchronizeMappings(ebpf interpreter.EbpfHandler,
 		if i.codeRangeListPtr == 0 {
 			// This is normal state if we attached to the process before
 			// the dotnet runtime has initialized itself fully.
-			log.Debugf("Dotnet DAC table is not yet initialized at %x", i.d.dacTableAddr)
+			log.Tracef("Dotnet DAC table is not yet initialized at %x", i.d.dacTableAddr)
 			return nil
 		}
-		log.Debugf("Found code range list head at %x", i.codeRangeListPtr)
+		log.Tracef("Found code range list head at %x", i.codeRangeListPtr)
 	}
 	if i.precodeStubManagerPtr == 0 && vms.DacTable.PrecodeStubManager != 0 {
 		i.precodeStubManagerPtr = i.getDacSlotPtr(vms.DacTable.PrecodeStubManager)
@@ -618,7 +618,7 @@ func (i *dotnetInstance) SynchronizeMappings(ebpf interpreter.EbpfHandler,
 			return info.err
 		}
 
-		log.Debugf("%x = %v -> %v guid %v",
+		log.Tracef("%x = %v -> %v guid %v",
 			info.fileID, m.Path,
 			info.simpleName, info.guid)
 
@@ -651,7 +651,7 @@ func (i *dotnetInstance) SynchronizeMappings(ebpf interpreter.EbpfHandler,
 	i.mappings = dotnetMappings
 
 	for _, m := range dotnetMappings {
-		log.Debugf("mapped %x-%x %s", m.start, m.end, m.info.simpleName)
+		log.Tracef("mapped %x-%x %s", m.start, m.end, m.info.simpleName)
 	}
 
 	if err := i.d.walkRangeSectionsMethod(i, ebpf, pr.PID()); err != nil {

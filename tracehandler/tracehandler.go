@@ -13,11 +13,10 @@ import (
 	lru "github.com/elastic/go-freelru"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/toliu/opentelemetry-ebpf-profiler/times"
-
 	"github.com/toliu/opentelemetry-ebpf-profiler/host"
 	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/times"
 )
 
 // metadataWarnInhibDuration defines the minimum duration between warnings printed
@@ -142,7 +141,7 @@ func (m *traceHandler) HandleTrace(bpfTrace *host.Trace) {
 
 	// Slow path: convert trace.
 	umTrace := m.traceProcessor.ConvertTrace(bpfTrace)
-	log.Debugf("Trace hash remap 0x%x -> 0x%x", bpfTrace.Hash, umTrace.Hash)
+	log.Tracef("Trace hash remap 0x%x -> 0x%x", bpfTrace.Hash, umTrace.Hash)
 	m.bpfTraceCache.Add(bpfTrace.Hash, umTrace.Hash)
 
 	meta.APMServiceName = m.traceProcessor.MaybeNotifyAPMAgent(bpfTrace, umTrace.Hash, 1)

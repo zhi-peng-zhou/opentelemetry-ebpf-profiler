@@ -283,11 +283,11 @@ func (vmd *hotspotVMData) parseIntrospection(it *hotspotIntrospectionTable,
 			// We just resolved a const pointer. Adjust it by loadBias
 			// to get a globally cacheable unrelocated virtual address.
 			value -= uint64(loadBias)
-			log.Debugf("JVM %v.%v = @ %x", typeName, fieldName, value)
+			log.Tracef("JVM %v.%v = @ %x", typeName, fieldName, value)
 		} else {
 			// Literal value
 			value = npsr.Uint64(e, valOffs)
-			log.Debugf("JVM %v.%v = %v", typeName, fieldName, value)
+			log.Tracef("JVM %v.%v = %v", typeName, fieldName, value)
 		}
 
 		switch f.Kind() {

@@ -9,6 +9,7 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"fmt"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter/colasoft"
 	"maps"
 	"os"
 	"regexp"
@@ -70,6 +71,7 @@ type traceAndMetaKey struct {
 	apmServiceName string
 	// containerID is annotated based on PID information
 	containerID string
+	pid, tid    libpf.PID
 }
 
 // traceEvents holds known information about a trace.
@@ -160,7 +162,7 @@ func (r *OTLPReporter) ReportTraceEvent(trace *libpf.Trace, meta *TraceEventMeta
 
 	containerID, err := r.lookupCgroupv2(meta.PID)
 	if err != nil {
-		log.Debugf("Failed to get a cgroupv2 ID as container ID for PID %d: %v",
+		log.Tracef("Failed to get a cgroupv2 ID as container ID for PID %d: %v",
 			meta.PID, err)
 	}
 
@@ -169,6 +171,8 @@ func (r *OTLPReporter) ReportTraceEvent(trace *libpf.Trace, meta *TraceEventMeta
 		comm:           meta.Comm,
 		apmServiceName: meta.APMServiceName,
 		containerID:    containerID,
+		pid:            meta.PID,
+		tid:            meta.TID,
 	}
 
 	if events, exists := (*traceEventsMap)[key]; exists {
@@ -221,7 +225,7 @@ func (r *OTLPReporter) FrameMetadata(args *FrameMetadataArgs) {
 	fileID := args.FrameID.FileID()
 	addressOrLine := args.FrameID.AddressOrLine()
 
-	log.Debugf("FrameMetadata [%x] %v+%v at %v:%v",
+	log.Tracef("FrameMetadata [%x] %v+%v at %v:%v",
 		fileID, args.FunctionName, args.FunctionOffset,
 		args.SourceFile, args.SourceLine)
 
@@ -394,7 +398,7 @@ func (r *OTLPReporter) reportOTLPProfile(ctx context.Context) error {
 	profile, startTS, endTS := r.getProfile()
 
 	if len(profile.Sample) == 0 {
-		log.Debugf("Skip sending of OTLP profile with no samples")
+		log.Tracef("Skip sending of OTLP profile with no samples")
 		return nil
 	}
 
@@ -540,7 +544,6 @@ func (r *OTLPReporter) getProfile() (profile *profiles.Profile, startTS, endTS u
 
 		sample.TimestampsUnixNano = traceInfo.timestamps
 		sample.Value = []int64{1}
-
 		// Walk every frame of the trace.
 		for i := range traceInfo.frameTypes {
 			frameAttributes := addProfileAttributes(profile, []attrKeyValue{
@@ -554,6 +557,11 @@ func (r *OTLPReporter) getProfile() (profile *profiles.Profile, startTS, endTS u
 				Attributes: frameAttributes,
 			}
 
+			label := &profiles.Label{
+				Key: int64(getStringMapIndex(stringMap, colasoft.LabelFileIDKey)),
+				Str: int64(getStringMapIndex(stringMap, traceInfo.files[i].Base64())),
+			}
+			sample.Label = append(sample.Label, label)
 			switch frameKind := traceInfo.frameTypes[i]; frameKind {
 			case libpf.NativeFrame:
 				// As native frames are resolved in the backend, we use Mapping to
@@ -645,13 +653,16 @@ func (r *OTLPReporter) getProfile() (profile *profiles.Profile, startTS, endTS u
 			{key: string(semconv.ContainerIDKey), value: traceKey.containerID},
 			{key: string(semconv.ThreadNameKey), value: traceKey.comm},
 			{key: string(semconv.ServiceNameKey), value: traceKey.apmServiceName},
+			{key: string(semconv.ThreadNameKey), value: traceKey.comm},
+			{key: string(semconv.ProcessPIDKey), value: strconv.Itoa(int(traceKey.pid))},
+			{key: string(semconv.ThreadIDKey), value: strconv.Itoa(int(traceKey.tid))},
 		}, attributeMap)
 		sample.LocationsLength = uint64(len(traceInfo.frameTypes))
 		locationIndex += sample.LocationsLength
 
 		profile.Sample = append(profile.Sample, sample)
 	}
-	log.Debugf("Reporting OTLP profile with %d samples", len(profile.Sample))
+	log.Tracef("Reporting OTLP profile with %d samples", len(profile.Sample))
 
 	// Populate the deduplicated functions into profile.
 	funcTable := make([]*profiles.Function, len(funcMap))
@@ -857,7 +868,7 @@ func (r *OTLPReporter) lookupCgroupv2(pid libpf.PID) (string, error) {
 		line := scanner.Text()
 		pathParts = cgroupv2PathPattern.FindStringSubmatch(line)
 		if pathParts == nil {
-			log.Debugf("Could not extract cgroupv2 path from line: %s", line)
+			log.Tracef("Could not extract cgroupv2 path from line: %s", line)
 			continue
 		}
 		genericCgroupv2 = pathParts[1]

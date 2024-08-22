@@ -340,7 +340,7 @@ func (state *executableInfoManagerState) detectAndLoadInterpData(
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				// Very common if the process exited when we tried to analyze it.
-				log.Debugf("Failed to load %v (%#016x): file not found",
+				log.Tracef("Failed to load %v (%#016x): file not found",
 					loaderInfo.FileName(), loaderInfo.FileID())
 			} else {
 				log.Errorf("Failed to load %v (%#016x): %v",
@@ -352,7 +352,7 @@ func (state *executableInfoManagerState) detectAndLoadInterpData(
 			continue
 		}
 
-		log.Debugf("Interpreter data %v for %v (%#016x)",
+		log.Tracef("Interpreter data %v for %v (%#016x)",
 			data, loaderInfo.FileName(), loaderInfo.FileID())
 		return data
 	}

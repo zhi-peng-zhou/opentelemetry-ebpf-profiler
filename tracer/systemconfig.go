@@ -228,7 +228,7 @@ func loadSystemConfig(coll *cebpf.CollectionSpec, maps map[string]*cebpf.Map,
 	if pacMask != 0 {
 		log.Infof("Determined PAC mask to be 0x%016X", pacMask)
 	} else {
-		log.Debug("PAC is not enabled on the system.")
+		log.Trace("PAC is not enabled on the system.")
 	}
 	syscfg := C.SystemConfig{
 		inverse_pac_mask:       ^C.u64(pacMask),
