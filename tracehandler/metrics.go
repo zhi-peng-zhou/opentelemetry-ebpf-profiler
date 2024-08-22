@@ -6,7 +6,7 @@
 
 package tracehandler
 
-import "github.com/open-telemetry/opentelemetry-ebpf-profiler/metrics"
+import "github.com/toliu/opentelemetry-ebpf-profiler/metrics"
 
 func (m *traceHandler) collectMetrics() {
 	metrics.AddSlice([]metrics.Metric{

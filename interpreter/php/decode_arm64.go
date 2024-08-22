@@ -12,8 +12,8 @@ import (
 	"errors"
 	"fmt"
 
-	ah "github.com/open-telemetry/opentelemetry-ebpf-profiler/armhelpers"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf"
+	ah "github.com/toliu/opentelemetry-ebpf-profiler/armhelpers"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 	aa "golang.org/x/arch/arm64/arm64asm"
 )
 

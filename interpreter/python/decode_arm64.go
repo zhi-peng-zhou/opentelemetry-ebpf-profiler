@@ -9,7 +9,7 @@
 package python
 
 import (
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 )
 
 func decodeStubArgumentWrapper(code []byte, argNumber uint8, symbolValue,

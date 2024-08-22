@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 )
 
 //nolint:lll

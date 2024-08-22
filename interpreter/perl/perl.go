@@ -52,7 +52,7 @@ import (
 	"debug/elf"
 	"regexp"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/interpreter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/interpreter"
 )
 
 //nolint:golint,stylecheck,revive

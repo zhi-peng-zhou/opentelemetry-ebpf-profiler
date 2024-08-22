@@ -13,10 +13,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/armhelpers"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/remotememory"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/armhelpers"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/remotememory"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
 	aa "golang.org/x/arch/arm64/arm64asm"
 
 	log "github.com/sirupsen/logrus"

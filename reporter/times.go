@@ -9,7 +9,7 @@ package reporter
 import (
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/times"
+	"github.com/toliu/opentelemetry-ebpf-profiler/times"
 )
 
 // Compile time check to make sure config.Times satisfies the interfaces.

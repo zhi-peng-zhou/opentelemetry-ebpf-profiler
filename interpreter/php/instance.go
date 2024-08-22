@@ -16,15 +16,15 @@ import (
 
 	"github.com/elastic/go-freelru"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/host"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/interpreter"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/metrics"
-	npsr "github.com/open-telemetry/opentelemetry-ebpf-profiler/nopanicslicereader"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/remotememory"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/reporter"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/successfailurecounter"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/interpreter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/metrics"
+	npsr "github.com/toliu/opentelemetry-ebpf-profiler/nopanicslicereader"
+	"github.com/toliu/opentelemetry-ebpf-profiler/remotememory"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/successfailurecounter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 )
 
 //nolint:golint,stylecheck,revive

@@ -16,8 +16,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/rlimit"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/rlimit"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 
 	"golang.org/x/sys/unix"
 

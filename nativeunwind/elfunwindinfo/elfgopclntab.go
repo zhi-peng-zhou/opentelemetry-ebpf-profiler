@@ -16,8 +16,8 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf/pfelf"
-	sdtypes "github.com/open-telemetry/opentelemetry-ebpf-profiler/nativeunwind/stackdeltatypes"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
+	sdtypes "github.com/toliu/opentelemetry-ebpf-profiler/nativeunwind/stackdeltatypes"
 	log "github.com/sirupsen/logrus"
 )
 

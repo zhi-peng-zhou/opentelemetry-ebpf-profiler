@@ -7,10 +7,10 @@
 package python
 
 import (
-	ah "github.com/open-telemetry/opentelemetry-ebpf-profiler/armhelpers"
+	ah "github.com/toliu/opentelemetry-ebpf-profiler/armhelpers"
 	aa "golang.org/x/arch/arm64/arm64asm"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 )
 
 // decodeStubArgumentWrapperARM64 disassembles arm64 code and decodes the assumed value

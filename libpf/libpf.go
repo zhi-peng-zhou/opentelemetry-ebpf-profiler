@@ -12,7 +12,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 )
 
 // UnixTime32 is another type to represent seconds since epoch.

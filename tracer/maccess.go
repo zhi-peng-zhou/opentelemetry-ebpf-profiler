@@ -10,8 +10,8 @@ import (
 	"runtime"
 
 	cebpf "github.com/cilium/ebpf"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/maccess"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/maccess"
 	log "github.com/sirupsen/logrus"
 )
 

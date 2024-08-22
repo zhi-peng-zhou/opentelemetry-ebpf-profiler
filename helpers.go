@@ -9,7 +9,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/tracer"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracer"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/jsimonetti/rtnetlink"

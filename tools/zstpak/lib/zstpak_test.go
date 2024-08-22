@@ -11,8 +11,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/testsupport"
-	zstpak "github.com/open-telemetry/opentelemetry-ebpf-profiler/tools/zstpak/lib"
+	"github.com/toliu/opentelemetry-ebpf-profiler/testsupport"
+	zstpak "github.com/toliu/opentelemetry-ebpf-profiler/tools/zstpak/lib"
 	"github.com/stretchr/testify/require"
 )
 

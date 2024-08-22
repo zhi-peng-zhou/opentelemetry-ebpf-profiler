@@ -18,15 +18,15 @@ import (
 
 	cebpf "github.com/cilium/ebpf"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf/xsync"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/nativeunwind/elfunwindinfo"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/process"
-	pm "github.com/open-telemetry/opentelemetry-ebpf-profiler/processmanager"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/reporter"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/support"
-	tracertypes "github.com/open-telemetry/opentelemetry-ebpf-profiler/tracer/types"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/xsync"
+	"github.com/toliu/opentelemetry-ebpf-profiler/nativeunwind/elfunwindinfo"
+	"github.com/toliu/opentelemetry-ebpf-profiler/process"
+	pm "github.com/toliu/opentelemetry-ebpf-profiler/processmanager"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
+	tracertypes "github.com/toliu/opentelemetry-ebpf-profiler/tracer/types"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 )
 
 // #include <stdlib.h>

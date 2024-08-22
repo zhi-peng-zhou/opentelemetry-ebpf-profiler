@@ -9,8 +9,8 @@
 package processmanager
 
 import (
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/host"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf/pfelf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
 )
 
 // insertSynthStackDeltas adds synthetic stack-deltas to the given SDMM. On non-ARM64, this is

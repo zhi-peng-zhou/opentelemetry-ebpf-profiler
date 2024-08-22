@@ -15,7 +15,7 @@ import (
 
 	lru "github.com/elastic/go-freelru"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf/hash"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/hash"
 )
 
 // page represents a cached region from the underlying reader.

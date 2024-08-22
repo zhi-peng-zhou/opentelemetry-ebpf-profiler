@@ -9,7 +9,7 @@ package proc
 import (
 	"testing"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

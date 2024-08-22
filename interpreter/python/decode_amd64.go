@@ -11,8 +11,8 @@ package python
 import (
 	"unsafe"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/libpf"
-	_ "github.com/open-telemetry/opentelemetry-ebpf-profiler/zydis" // links Zydis
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	_ "github.com/toliu/opentelemetry-ebpf-profiler/zydis" // links Zydis
 )
 
 // #cgo CFLAGS: -g -Wall

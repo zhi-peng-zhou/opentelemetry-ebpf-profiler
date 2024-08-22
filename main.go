@@ -18,22 +18,22 @@ import (
 	//nolint:gosec
 	_ "net/http/pprof"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/times"
-	tracertypes "github.com/open-telemetry/opentelemetry-ebpf-profiler/tracer/types"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/util"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/vc"
+	"github.com/toliu/opentelemetry-ebpf-profiler/times"
+	tracertypes "github.com/toliu/opentelemetry-ebpf-profiler/tracer/types"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/vc"
 	"github.com/tklauser/numcpus"
 	"golang.org/x/sys/unix"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/host"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/tracehandler"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracehandler"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/hostmetadata"
+	"github.com/toliu/opentelemetry-ebpf-profiler/hostmetadata"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/metrics"
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/metrics"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
 
-	"github.com/open-telemetry/opentelemetry-ebpf-profiler/tracer"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracer"
 
 	log "github.com/sirupsen/logrus"
 )
