@@ -18,7 +18,7 @@ import (
 
 	"github.com/peterbourgon/ff/v3/ffcli"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/ebpf-profiler/tools/coredump/modulestore"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tools/coredump/modulestore"
 )
 
 // moduleStoreS3Bucket defines the S3 bucket used for the module store.

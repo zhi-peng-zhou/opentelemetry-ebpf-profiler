@@ -16,10 +16,10 @@ import (
 	"math/bits"
 	"unsafe"
 
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/support"
-	"go.opentelemetry.io/ebpf-profiler/times"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/times"
 
 	log "github.com/sirupsen/logrus"
 )

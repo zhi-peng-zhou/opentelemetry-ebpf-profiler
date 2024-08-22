@@ -3,11 +3,11 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package processmanager // import "go.opentelemetry.io/ebpf-profiler/processmanager"
+package processmanager // import "github.com/toliu/opentelemetry-ebpf-profiler/processmanager"
 
 import (
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/libpf/pfelf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
 )
 
 // insertSynthStackDeltas adds synthetic stack-deltas to the given SDMM. On non-ARM64, this is

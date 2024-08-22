@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package tracer // import "go.opentelemetry.io/ebpf-profiler/tracer"
+package tracer // import "github.com/toliu/opentelemetry-ebpf-profiler/tracer"
 
 import (
 	"encoding/binary"
@@ -12,16 +12,16 @@ import (
 	"strings"
 	"unsafe"
 
-	"go.opentelemetry.io/ebpf-profiler/rlimit"
-	"go.opentelemetry.io/ebpf-profiler/tracer/types"
+	"github.com/toliu/opentelemetry-ebpf-profiler/rlimit"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracer/types"
 
 	cebpf "github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/btf"
 	"github.com/cilium/ebpf/link"
 	log "github.com/sirupsen/logrus"
 
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/pacmask"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/pacmask"
 )
 
 // #include "../support/ebpf/types.h"

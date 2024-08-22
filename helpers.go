@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/ebpf-profiler/tracer"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracer"
 
 	"github.com/jsimonetti/rtnetlink"
 	"golang.org/x/sys/unix"
