@@ -346,6 +346,18 @@ func (t *Tracer) Close() {
 	}
 
 	t.processManager.Close()
+
+	// FIXME(liushi): 需要在停止时关闭ebpf程序与map，避免内存泄漏
+	errs := make([]error, 0)
+	for _, prog := range t.ebpfProgs {
+		errs = append(errs, prog.Close())
+	}
+	for _, m := range t.ebpfMaps {
+		errs = append(errs, m.Close())
+	}
+	if err := errors.Join(errs...); err != nil {
+		log.Warnf("failed to close program & map: %v", err)
+	}
 }
 
 func buildStackDeltaTemplates(coll *cebpf.CollectionSpec) error {

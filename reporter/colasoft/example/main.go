@@ -52,7 +52,6 @@ func main() {
 
 	beforeCheck := []func() error{
 		tracer.ProbeBPFSyscall,
-		tracer.ProbeTracepoint,
 	}
 
 	for _, check := range beforeCheck {
@@ -124,7 +123,10 @@ func main() {
 	traceCh := make(chan *host.Trace)
 
 	chains := []func() error{
-		func() error { return trc.StartPIDEventProcessor(mainCtx) },
+		func() error {
+			trc.StartPIDEventProcessor(mainCtx)
+			return nil
+		},
 		trc.AttachTracer,
 		trc.EnableProfiling,
 		trc.AttachSchedMonitor,

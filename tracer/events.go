@@ -91,7 +91,7 @@ func startPerfEventMonitor(ctx context.Context, perfEventMap *ebpf.Map,
 	if err != nil {
 		log.Fatalf("Failed to setup perf reporting via %s: %v", perfEventMap, err)
 	}
-
+	go keepEventReader(ctx, eventReader)
 	var lostEventsCount, readErrorCount, noDataCount atomic.Uint64
 	go func() {
 		var data perf.Record
@@ -141,6 +141,8 @@ func startPollingPerfEventMonitor(ctx context.Context, perfEventMap *ebpf.Map,
 		log.Fatalf("Failed to setup perf reporting via %s: %v", perfEventMap, err)
 	}
 
+	go keepEventReader(ctx, eventReader)
+
 	// A deadline of zero is treated as "no deadline". A deadline in the past
 	// means "always return immediately". We thus set a deadline 1 second after
 	// unix epoch to always ensure the latter behavior.
@@ -188,6 +190,18 @@ func startPollingPerfEventMonitor(ctx context.Context, perfEventMap *ebpf.Map,
 		noData = noDataCount.Swap(0)
 		readError = readErrorCount.Swap(0)
 		return
+	}
+}
+
+// FIXME(liushi): 保持perf.Reader， 保证ctx结束时，立即关闭reader，移除perf_event_array map，避免内存泄漏
+func keepEventReader(ctx context.Context, reader *perf.Reader) {
+	for range time.Tick(time.Second) {
+		select {
+		case <-ctx.Done():
+			_ = reader.Close()
+			return
+		default:
+		}
 	}
 }
 
