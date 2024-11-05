@@ -50,6 +50,8 @@ func ColaSoftReporter(ctx context.Context, cfg *ColaSoftConfig) (*ColaSoft, erro
 	} else if otlp.hostmetadata, err = lru.NewSynced[string, string](115, hashString); err != nil {
 		return nil, err
 	}
+	otlp.executables.SetLifetime(1 * time.Hour) // Allow GC to clean stale items.
+	otlp.frames.SetLifetime(1 * time.Hour)      // Allow GC to clean stale items.
 	otlp.cgroupv2ID.SetLifetime(90 * time.Second)
 
 	reporter := &ColaSoft{OTLPReporter: otlp}
@@ -57,7 +59,20 @@ func ColaSoftReporter(ctx context.Context, cfg *ColaSoftConfig) (*ColaSoft, erro
 	ctx, cancelReporting = context.WithCancel(ctx)
 	go func() {
 		tick := time.NewTicker(cfg.ReportInterval)
-		defer tick.Stop()
+		defer func() {
+			tick.Stop()
+			counter := 5
+			for range time.Tick(time.Second) {
+				otlp.cgroupv2ID.Purge()
+				otlp.hostmetadata.Purge()
+				otlp.frames.Purge()
+				otlp.executables.Purge()
+				counter--
+				if counter == 0 {
+					break
+				}
+			}
+		}()
 		defer cancelReporting()
 		for {
 			select {

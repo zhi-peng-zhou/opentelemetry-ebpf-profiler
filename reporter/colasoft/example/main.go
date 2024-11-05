@@ -149,5 +149,5 @@ func main() {
 	log.Info("Stop processing ...")
 	rep.Stop()
 
-	log.Info("Exiting ...")
+	log.Info("Exiting...")
 }
