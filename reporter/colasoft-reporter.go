@@ -65,6 +65,10 @@ func ColaSoftReporter(ctx context.Context, cfg *ColaSoftConfig) (*ColaSoft, erro
 			otlp.hostmetadata.Purge()
 			otlp.frames.Purge()
 			otlp.executables.Purge()
+			otlp.cgroupv2ID = nil
+			otlp.hostmetadata = nil
+			otlp.frames = nil
+			otlp.executables = nil
 		}()
 		defer cancelReporting()
 		for {
