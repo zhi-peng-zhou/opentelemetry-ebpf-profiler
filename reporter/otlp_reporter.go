@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package reporter // import "go.opentelemetry.io/ebpf-profiler/reporter"
+package reporter // import "github.com/toliu/opentelemetry-ebpf-profiler/reporter"
 
 import (
 	"context"
@@ -19,11 +19,11 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/libpf/xsync"
-	"go.opentelemetry.io/ebpf-profiler/reporter/internal/pdata"
-	"go.opentelemetry.io/ebpf-profiler/reporter/samples"
-	"go.opentelemetry.io/ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/xsync"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter/internal/pdata"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter/samples"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
 )
 
 // Assert that we implement the full Reporter interface.
@@ -169,7 +169,7 @@ func (r *OTLPReporter) reportOTLPProfile(ctx context.Context) error {
 	}
 
 	if profiles.SampleCount() == 0 {
-		log.Debugf("Skip sending of OTLP profile with no samples")
+		log.Tracef("Skip sending of OTLP profile with no samples")
 		return nil
 	}
 	req := pprofileotlp.NewExportRequestFromProfiles(profiles)

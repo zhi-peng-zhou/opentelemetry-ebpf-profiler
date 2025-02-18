@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package ruby // import "go.opentelemetry.io/ebpf-profiler/interpreter/ruby"
+package ruby // import "github.com/toliu/opentelemetry-ebpf-profiler/interpreter/ruby"
 
 import (
 	"encoding/binary"
@@ -20,17 +20,17 @@ import (
 
 	"github.com/elastic/go-freelru"
 
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/interpreter"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/libpf/hash"
-	"go.opentelemetry.io/ebpf-profiler/libpf/pfelf"
-	"go.opentelemetry.io/ebpf-profiler/metrics"
-	"go.opentelemetry.io/ebpf-profiler/remotememory"
-	"go.opentelemetry.io/ebpf-profiler/reporter"
-	"go.opentelemetry.io/ebpf-profiler/successfailurecounter"
-	"go.opentelemetry.io/ebpf-profiler/support"
-	"go.opentelemetry.io/ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/interpreter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/hash"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/metrics"
+	"github.com/toliu/opentelemetry-ebpf-profiler/remotememory"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/successfailurecounter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 )
 
 const (
@@ -673,7 +673,7 @@ func (r *rubyInstance) Symbolize(symbolReporter reporter.SymbolReporter,
 		return err
 	}
 	if !util.IsValidString(sourceFileName) {
-		log.Debugf("Extracted invalid Ruby source file name at 0x%x '%v'",
+		log.Tracef("Extracted invalid Ruby source file name at 0x%x '%v'",
 			iseqBody, []byte(sourceFileName))
 		return fmt.Errorf("extracted invalid Ruby source file name from address 0x%x",
 			iseqBody)
@@ -686,7 +686,7 @@ func (r *rubyInstance) Symbolize(symbolReporter reporter.SymbolReporter,
 		return err
 	}
 	if !util.IsValidString(functionName) {
-		log.Debugf("Extracted invalid Ruby method name at 0x%x '%v'",
+		log.Tracef("Extracted invalid Ruby method name at 0x%x '%v'",
 			iseqBody, []byte(functionName))
 		return fmt.Errorf("extracted invalid Ruby method name from address 0x%x",
 			iseqBody)

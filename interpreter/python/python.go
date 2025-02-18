@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package python // import "go.opentelemetry.io/ebpf-profiler/interpreter/python"
+package python // import "github.com/toliu/opentelemetry-ebpf-profiler/interpreter/python"
 
 import (
 	"bytes"
@@ -21,18 +21,18 @@ import (
 
 	"github.com/elastic/go-freelru"
 
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/interpreter"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/libpf/pfelf"
-	"go.opentelemetry.io/ebpf-profiler/metrics"
-	npsr "go.opentelemetry.io/ebpf-profiler/nopanicslicereader"
-	"go.opentelemetry.io/ebpf-profiler/remotememory"
-	"go.opentelemetry.io/ebpf-profiler/reporter"
-	"go.opentelemetry.io/ebpf-profiler/successfailurecounter"
-	"go.opentelemetry.io/ebpf-profiler/support"
-	"go.opentelemetry.io/ebpf-profiler/tpbase"
-	"go.opentelemetry.io/ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/interpreter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/metrics"
+	npsr "github.com/toliu/opentelemetry-ebpf-profiler/nopanicslicereader"
+	"github.com/toliu/opentelemetry-ebpf-profiler/remotememory"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/successfailurecounter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tpbase"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 )
 
 // #include <stdlib.h>
@@ -216,7 +216,7 @@ func walkLocationTable(m *pythonCodeObject, bci uint32) uint32 {
 	for curI <= bci {
 		firstByte, err := r.ReadByte()
 		if err != nil || firstByte&0x80 == 0 {
-			log.Debugf("first byte: sync lost (%x) or error: %v",
+			log.Tracef("first byte: sync lost (%x) or error: %v",
 				firstByte, err)
 			return 0
 		}
@@ -250,7 +250,7 @@ func walkLocationTable(m *pythonCodeObject, bci uint32) uint32 {
 			// PY_CODE_LOCATION_INFO_NONE does not hold line information
 			line = -1
 		default:
-			log.Debugf("Unexpected PyCodeLocationInfoKind %d", code)
+			log.Tracef("Unexpected PyCodeLocationInfoKind %d", code)
 			return 0
 		}
 	}
@@ -510,7 +510,7 @@ func (p *pythonInstance) getCodeObject(addr libpf.Address,
 		name = p.rm.String(data + npsr.Ptr(cobj, vms.PyCodeObject.Name))
 	}
 	if !util.IsValidString(name) {
-		log.Debugf("Extracted invalid Python method/function name at 0x%x '%v'",
+		log.Tracef("Extracted invalid Python method/function name at 0x%x '%v'",
 			addr, []byte(name))
 		return nil, fmt.Errorf("extracted invalid Python method/function name from address 0x%x",
 			addr)
@@ -525,7 +525,7 @@ func (p *pythonInstance) getCodeObject(addr libpf.Address,
 		sourceFileName = sourcePath
 	}
 	if !util.IsValidString(sourceFileName) {
-		log.Debugf("Extracted invalid Python source file name at 0x%x '%v'",
+		log.Tracef("Extracted invalid Python source file name at 0x%x '%v'",
 			addr, []byte(sourceFileName))
 		return nil, fmt.Errorf("extracted invalid Python source file name from address 0x%x",
 			addr)

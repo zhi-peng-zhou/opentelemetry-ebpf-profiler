@@ -1,4 +1,4 @@
-package controller // import "go.opentelemetry.io/ebpf-profiler/internal/controller"
+package controller // import "github.com/toliu/opentelemetry-ebpf-profiler/internal/controller"
 
 import (
 	"context"
@@ -8,14 +8,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/tklauser/numcpus"
 
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/metrics"
-	"go.opentelemetry.io/ebpf-profiler/reporter"
-	"go.opentelemetry.io/ebpf-profiler/times"
-	"go.opentelemetry.io/ebpf-profiler/tracehandler"
-	"go.opentelemetry.io/ebpf-profiler/tracer"
-	tracertypes "go.opentelemetry.io/ebpf-profiler/tracer/types"
-	"go.opentelemetry.io/ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/metrics"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/times"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracehandler"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracer"
+	tracertypes "github.com/toliu/opentelemetry-ebpf-profiler/tracer/types"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 )
 
 const MiB = 1 << 20
@@ -60,7 +60,7 @@ func (c *Controller) Start(ctx context.Context) error {
 	// Start periodic synchronization with the realtime clock
 	times.StartRealtimeSync(ctx, c.config.ClockSyncInterval)
 
-	log.Debugf("Determining tracers to include")
+	log.Tracef("Determining tracers to include")
 	includeTracers, err := tracertypes.Parse(c.config.Tracers)
 	if err != nil {
 		return fmt.Errorf("failed to parse the included tracers: %w", err)
@@ -97,13 +97,13 @@ func (c *Controller) Start(ctx context.Context) error {
 	trc.StartPIDEventProcessor(ctx)
 
 	metrics.Add(metrics.IDProcPIDStartupMs, metrics.MetricValue(time.Since(now).Milliseconds()))
-	log.Debug("Completed initial PID listing")
+	log.Trace("Completed initial PID listing")
 
 	// Attach our tracer to the perf event
 	if err := trc.AttachTracer(); err != nil {
 		return fmt.Errorf("failed to attach to perf event: %w", err)
 	}
-	log.Info("Attached tracer program")
+	log.Trace("Attached tracer program")
 
 	if c.config.OffCPUThreshold > 0 {
 		if err := trc.StartOffCPUProfiling(); err != nil {
@@ -139,7 +139,7 @@ func (c *Controller) Start(ctx context.Context) error {
 
 // Shutdown stops the controller
 func (c *Controller) Shutdown() {
-	log.Info("Stop processing ...")
+	log.Trace("Stop processing ...")
 	if c.reporter != nil {
 		c.reporter.Stop()
 	}

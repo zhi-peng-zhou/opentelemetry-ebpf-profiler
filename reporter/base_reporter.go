@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package reporter // import "go.opentelemetry.io/ebpf-profiler/reporter"
+package reporter // import "github.com/toliu/opentelemetry-ebpf-profiler/reporter"
 
 import (
 	"context"
@@ -9,11 +9,11 @@ import (
 
 	lru "github.com/elastic/go-freelru"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/libpf/xsync"
-	"go.opentelemetry.io/ebpf-profiler/reporter/internal/pdata"
-	"go.opentelemetry.io/ebpf-profiler/reporter/samples"
-	"go.opentelemetry.io/ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/xsync"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter/internal/pdata"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter/samples"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
 )
 
 // baseReporter encapsulates shared behavior between all the available reporters.
@@ -109,7 +109,7 @@ func (b *baseReporter) ReportTraceEvent(trace *libpf.Trace, meta *samples.TraceE
 
 	containerID, err := libpf.LookupCgroupv2(b.cgroupv2ID, meta.PID)
 	if err != nil {
-		log.Debugf("Failed to get a cgroupv2 ID as container ID for PID %d: %v",
+		log.Tracef("Failed to get a cgroupv2 ID as container ID for PID %d: %v",
 			meta.PID, err)
 	}
 
@@ -150,7 +150,7 @@ func (b *baseReporter) FrameMetadata(args *FrameMetadataArgs) {
 	fileID := args.FrameID.FileID()
 	addressOrLine := args.FrameID.AddressOrLine()
 
-	log.Debugf("FrameMetadata [%x] %v+%v at %v:%v",
+	log.Tracef("FrameMetadata [%x] %v+%v at %v:%v",
 		fileID, args.FunctionName, args.FunctionOffset,
 		args.SourceFile, args.SourceLine)
 

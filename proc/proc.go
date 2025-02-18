@@ -3,7 +3,7 @@
 
 // Package proc provides functionality for retrieving kallsyms, modules and
 // executable mappings via /proc.
-package proc // import "go.opentelemetry.io/ebpf-profiler/proc"
+package proc // import "github.com/toliu/opentelemetry-ebpf-profiler/proc"
 
 import (
 	"bufio"
@@ -16,8 +16,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/stringutil"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/stringutil"
 )
 
 const defaultMountPoint = "/proc"
@@ -102,7 +102,7 @@ func GetKernelModules(modulesPath string,
 	if err != nil {
 		return nil, fmt.Errorf("unable to find kernel text section end: %v", err)
 	}
-	log.Debugf("Found KERNEL TEXT at %x-%x", stext.Address, etext.Address)
+	log.Tracef("Found KERNEL TEXT at %x-%x", stext.Address, etext.Address)
 	symmap.Add(libpf.Symbol{
 		Name:    "vmlinux",
 		Address: stext.Address,

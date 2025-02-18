@@ -3,7 +3,7 @@
 
 // Package tracehandler converts raw BPF traces into the enriched user-mode
 // format and then forwards them to the reporter.
-package tracehandler // import "go.opentelemetry.io/ebpf-profiler/tracehandler"
+package tracehandler // import "github.com/toliu/opentelemetry-ebpf-profiler/tracehandler"
 
 import (
 	"context"
@@ -13,12 +13,12 @@ import (
 	lru "github.com/elastic/go-freelru"
 	log "github.com/sirupsen/logrus"
 
-	"go.opentelemetry.io/ebpf-profiler/reporter/samples"
-	"go.opentelemetry.io/ebpf-profiler/times"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter/samples"
+	"github.com/toliu/opentelemetry-ebpf-profiler/times"
 
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
 )
 
 // metadataWarnInhibDuration defines the minimum duration between warnings printed
@@ -145,7 +145,7 @@ func (m *traceHandler) HandleTrace(bpfTrace *host.Trace) {
 
 	// Slow path: convert trace.
 	umTrace := m.traceProcessor.ConvertTrace(bpfTrace)
-	log.Debugf("Trace hash remap 0x%x -> 0x%x", bpfTrace.Hash, umTrace.Hash)
+	log.Tracef("Trace hash remap 0x%x -> 0x%x", bpfTrace.Hash, umTrace.Hash)
 	m.bpfTraceCache.Add(bpfTrace.Hash, umTrace.Hash)
 
 	meta.APMServiceName = m.traceProcessor.MaybeNotifyAPMAgent(bpfTrace, umTrace.Hash, 1)

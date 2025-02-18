@@ -5,7 +5,7 @@
 // libraries, establishes socket connections with them and notifies them about
 // the stack traces that we collected for their process. This allows the APM
 // agent to associate stack traces with APM traces / transactions / spans.
-package apmint // import "go.opentelemetry.io/ebpf-profiler/interpreter/apmint"
+package apmint // import "github.com/toliu/opentelemetry-ebpf-profiler/interpreter/apmint"
 
 import (
 	"encoding/hex"
@@ -16,12 +16,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/interpreter"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/libpf/pfelf"
-	"go.opentelemetry.io/ebpf-profiler/remotememory"
-	"go.opentelemetry.io/ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/interpreter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/remotememory"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
 )
 
 const (
@@ -86,7 +86,7 @@ func Loader(_ interpreter.EbpfHandler, info *interpreter.LoaderInfo) (interprete
 		return nil, errors.New("failed to locate TLS descriptor")
 	}
 
-	log.Debugf("APM integration TLS descriptor offset: 0x%08X", tlsDescElfAddr)
+	log.Tracef("APM integration TLS descriptor offset: 0x%08X", tlsDescElfAddr)
 
 	return &data{
 		tlsDescElfAddr:   tlsDescElfAddr,
@@ -124,7 +124,7 @@ func (d data) Attach(ebpf interpreter.EbpfHandler, pid libpf.PID,
 		return nil, fmt.Errorf("failed to open APM agent socket: %v", err)
 	}
 
-	log.Debugf("PID %d apm.service.name: %s, trace socket: %s",
+	log.Tracef("PID %d apm.service.name: %s, trace socket: %s",
 		pid, procStorage.ServiceName, procStorage.TraceSocketPath)
 
 	return &Instance{
@@ -153,7 +153,7 @@ func (i *Instance) NotifyAPMAgent(
 		return
 	}
 
-	log.Debugf("Reporting %dx trace hash %s -> TX %s for PID %d",
+	log.Tracef("Reporting %dx trace hash %s -> TX %s for PID %d",
 		count, umTraceHash.StringNoQuotes(),
 		hex.EncodeToString(rawTrace.APMTransactionID[:]), pid)
 
@@ -167,7 +167,7 @@ func (i *Instance) NotifyAPMAgent(
 	}
 
 	if err := i.socket.SendMessage(msg.Serialize()); err != nil {
-		log.Debugf("Failed to send trace mappings to APM agent: %v", err)
+		log.Tracef("Failed to send trace mappings to APM agent: %v", err)
 	}
 }
 

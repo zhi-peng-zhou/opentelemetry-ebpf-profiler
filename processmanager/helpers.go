@@ -1,14 +1,14 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package processmanager // import "go.opentelemetry.io/ebpf-profiler/processmanager"
+package processmanager // import "github.com/toliu/opentelemetry-ebpf-profiler/processmanager"
 
 import (
 	lru "github.com/elastic/go-freelru"
 	log "github.com/sirupsen/logrus"
 
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 )
 
 type lruFileIDMapper struct {
@@ -40,7 +40,7 @@ func (fm *lruFileIDMapper) Get(key host.FileID) (libpf.FileID, bool) {
 
 func (fm *lruFileIDMapper) Set(key host.FileID, val libpf.FileID) {
 	fm.cache.Add(key, val)
-	log.Debugf("Stored file ID mapping %#x -> %#x", key, val)
+	log.Tracef("Stored file ID mapping %#x -> %#x", key, val)
 }
 
 var _ FileIDMapper = (*lruFileIDMapper)(nil)
