@@ -1,4 +1,4 @@
-package controller // import "go.opentelemetry.io/ebpf-profiler/internal/controller"
+package controller // import "github.com/toliu/opentelemetry-ebpf-profiler/internal/controller"
 
 import (
 	"errors"
@@ -9,9 +9,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"go.opentelemetry.io/ebpf-profiler/reporter"
-	"go.opentelemetry.io/ebpf-profiler/support"
-	"go.opentelemetry.io/ebpf-profiler/tracer"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracer"
 )
 
 type Config struct {
@@ -51,9 +51,9 @@ const (
 // Dump visits all flag sets, and dumps them all to debug
 // Used for verbose mode logging.
 func (cfg *Config) Dump() {
-	log.Debug("Config:")
+	log.Trace("Config:")
 	cfg.Fs.VisitAll(func(f *flag.Flag) {
-		log.Debug(fmt.Sprintf("%s: %v", f.Name, f.Value))
+		log.Trace(fmt.Sprintf("%s: %v", f.Name, f.Value))
 	})
 }
 

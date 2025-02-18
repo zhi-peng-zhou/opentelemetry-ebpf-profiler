@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package libpf // import "go.opentelemetry.io/ebpf-profiler/libpf"
+package libpf // import "github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 
 import (
 	"bufio"
@@ -44,7 +44,7 @@ func LookupCgroupv2(cgrouplru *lru.SyncedLRU[PID, string], pid PID) (string, err
 		line := scanner.Text()
 		pathParts = cgroupv2PathPattern.FindStringSubmatch(line)
 		if pathParts == nil {
-			log.Debugf("Could not extract cgroupv2 path from line: %s", line)
+			log.Tracef("Could not extract cgroupv2 path from line: %s", line)
 			continue
 		}
 		genericCgroupv2 = pathParts[1]

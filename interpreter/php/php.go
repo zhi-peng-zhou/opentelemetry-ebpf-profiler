@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package php // import "go.opentelemetry.io/ebpf-profiler/interpreter/php"
+package php // import "github.com/toliu/opentelemetry-ebpf-profiler/interpreter/php"
 
 import (
 	"bytes"
@@ -15,11 +15,11 @@ import (
 
 	"github.com/elastic/go-freelru"
 
-	"go.opentelemetry.io/ebpf-profiler/interpreter"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/libpf/pfelf"
-	"go.opentelemetry.io/ebpf-profiler/remotememory"
-	"go.opentelemetry.io/ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/interpreter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/remotememory"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
 )
 
 //nolint:golint,stylecheck,revive
@@ -300,13 +300,13 @@ func Loader(ebpf interpreter.EbpfHandler, info *interpreter.LoaderInfo) (interpr
 		var vmKind uint
 		vmKind, err = determineVMKind(ef)
 		if err != nil {
-			log.Debugf("PHP version %x: an error occurred while determining "+
+			log.Tracef("PHP version %x: an error occurred while determining "+
 				"the VM kind (%v)",
 				version, err)
 		} else if vmKind == ZEND_VM_KIND_HYBRID {
 			rtAddr, err = recoverExecuteExJumpLabelAddress(ef)
 			if err != nil {
-				log.Debugf("PHP version %x: an error occurred while determining "+
+				log.Tracef("PHP version %x: an error occurred while determining "+
 					"the return address for execute_ex: (%v)", version, err)
 			}
 		}

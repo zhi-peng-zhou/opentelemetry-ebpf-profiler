@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package perl // import "go.opentelemetry.io/ebpf-profiler/interpreter/perl"
+package perl // import "github.com/toliu/opentelemetry-ebpf-profiler/interpreter/perl"
 
 import (
 	"fmt"
@@ -10,11 +10,11 @@ import (
 	"github.com/elastic/go-freelru"
 	log "github.com/sirupsen/logrus"
 
-	"go.opentelemetry.io/ebpf-profiler/interpreter"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/libpf/pfelf"
-	"go.opentelemetry.io/ebpf-profiler/remotememory"
-	"go.opentelemetry.io/ebpf-profiler/support"
+	"github.com/toliu/opentelemetry-ebpf-profiler/interpreter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/remotememory"
+	"github.com/toliu/opentelemetry-ebpf-profiler/support"
 )
 
 // #include "../../support/ebpf/types.h"
@@ -178,7 +178,7 @@ func newData(ebpf interpreter.EbpfHandler, info *interpreter.LoaderInfo,
 	}
 
 	version := perlVersion(verBytes[0], verBytes[1], verBytes[2])
-	log.Debugf("Perl version %v.%v.%v", verBytes[0], verBytes[1], verBytes[2])
+	log.Tracef("Perl version %v.%v.%v", verBytes[0], verBytes[1], verBytes[2])
 
 	// Currently tested and supported 5.28.x - 5.40.x.
 	// Could possibly support older Perl versions somewhere back to 5.14-5.20, by just

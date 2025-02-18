@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package dotnet // import "go.opentelemetry.io/ebpf-profiler/interpreter/dotnet"
+package dotnet // import "github.com/toliu/opentelemetry-ebpf-profiler/interpreter/dotnet"
 
 // Microsoft .Net Unwinder support code
 
@@ -106,8 +106,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"go.opentelemetry.io/ebpf-profiler/interpreter"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/interpreter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 )
 
 const (
@@ -168,7 +168,7 @@ func Loader(_ interpreter.EbpfHandler, info *interpreter.LoaderInfo) (interprete
 		return nil, err
 	}
 
-	log.Debugf("Dotnet DAC table at %x", addr)
+	log.Tracef("Dotnet DAC table at %x", addr)
 
 	d := &dotnetData{
 		version:      version,

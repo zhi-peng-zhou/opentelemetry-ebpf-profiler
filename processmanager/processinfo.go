@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package processmanager // import "go.opentelemetry.io/ebpf-profiler/processmanager"
+package processmanager // import "github.com/toliu/opentelemetry-ebpf-profiler/processmanager"
 
 // This file is the only place that should access pidToProcessInfo.
 // The map is used to synchronize state between eBPF maps and process
@@ -21,19 +21,19 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"go.opentelemetry.io/ebpf-profiler/host"
-	"go.opentelemetry.io/ebpf-profiler/interpreter"
-	"go.opentelemetry.io/ebpf-profiler/libpf"
-	"go.opentelemetry.io/ebpf-profiler/libpf/pfelf"
-	"go.opentelemetry.io/ebpf-profiler/lpm"
-	"go.opentelemetry.io/ebpf-profiler/proc"
-	"go.opentelemetry.io/ebpf-profiler/process"
-	eim "go.opentelemetry.io/ebpf-profiler/processmanager/execinfomanager"
-	"go.opentelemetry.io/ebpf-profiler/reporter"
-	"go.opentelemetry.io/ebpf-profiler/times"
-	"go.opentelemetry.io/ebpf-profiler/tpbase"
-	"go.opentelemetry.io/ebpf-profiler/tracehandler"
-	"go.opentelemetry.io/ebpf-profiler/util"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
+	"github.com/toliu/opentelemetry-ebpf-profiler/interpreter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf/pfelf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/lpm"
+	"github.com/toliu/opentelemetry-ebpf-profiler/proc"
+	"github.com/toliu/opentelemetry-ebpf-profiler/process"
+	eim "github.com/toliu/opentelemetry-ebpf-profiler/processmanager/execinfomanager"
+	"github.com/toliu/opentelemetry-ebpf-profiler/reporter"
+	"github.com/toliu/opentelemetry-ebpf-profiler/times"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tpbase"
+	"github.com/toliu/opentelemetry-ebpf-profiler/tracehandler"
+	"github.com/toliu/opentelemetry-ebpf-profiler/util"
 )
 
 // assignTSDInfo updates the TSDInfo for the Interpreters on given PID.
@@ -204,7 +204,7 @@ func (pm *ProcessManager) handleNewInterpreter(pr process.Process, m *Mapping,
 			ei.Data, pid, err)
 	}
 
-	log.Debugf("Attached to %v interpreter in PID %v", ei.Data, pid)
+	log.Tracef("Attached to %v interpreter in PID %v", ei.Data, pid)
 	pm.assignInterpreter(pid, key, instance)
 
 	if tsdInfo := pm.getTSDInfo(pid); tsdInfo != nil {
@@ -347,7 +347,7 @@ func (pm *ProcessManager) processNewExecMapping(pr process.Process, mapping *pro
 		// process has exited already and the mapping file is unavailable
 		// or it is not an ELF file. Ignore these errors silently.
 		if !errors.Is(info.err, os.ErrNotExist) && !errors.Is(info.err, pfelf.ErrNotELF) {
-			log.Debugf("Failed to get ELF info for PID %d file %v: %v",
+			log.Tracef("Failed to get ELF info for PID %d file %v: %v",
 				pr.PID(), mapping.Path, info.err)
 		}
 		return
@@ -356,7 +356,7 @@ func (pm *ProcessManager) processNewExecMapping(pr process.Process, mapping *pro
 	// Get the virtual addresses for this mapping
 	elfSpaceVA, ok := info.addressMapper.FileOffsetToVirtualAddress(mapping.FileOffset)
 	if !ok {
-		log.Debugf("Failed to map file offset of PID %d, file %s, offset %d",
+		log.Tracef("Failed to map file offset of PID %d, file %s, offset %d",
 			pr.PID(), mapping.Path, mapping.FileOffset)
 		return
 	}
@@ -389,7 +389,7 @@ func (pm *ProcessManager) processRemovedMappings(pid libpf.PID, mappings []libpf
 
 	for _, addr := range mappings {
 		if err := pm.deletePIDAddress(pid, addr); err != nil {
-			log.Debugf("Failed to handle native unmapping of 0x%x in PID %d: %v",
+			log.Tracef("Failed to handle native unmapping of 0x%x in PID %d: %v",
 				addr, pid, err)
 		}
 	}
@@ -399,7 +399,7 @@ func (pm *ProcessManager) processRemovedMappings(pid libpf.PID, mappings []libpf
 	}
 
 	if _, ok := pm.interpreters[pid]; !ok {
-		log.Debugf("ProcessManager doesn't know about PID %d", pid)
+		log.Tracef("ProcessManager doesn't know about PID %d", pid)
 		return
 	}
 
@@ -491,7 +491,7 @@ func (pm *ProcessManager) synchronizeMappings(pr process.Process,
 				if alive, _ := proc.IsPIDLive(pid); alive {
 					log.Errorf("Failed to handle new anonymous mapping for PID %d: %v", pid, err)
 				} else {
-					log.Debugf("Failed to handle new anonymous mapping for PID %d: process exited",
+					log.Tracef("Failed to handle new anonymous mapping for PID %d: process exited",
 						pid)
 				}
 			}
@@ -500,7 +500,7 @@ func (pm *ProcessManager) synchronizeMappings(pr process.Process,
 	}
 
 	if len(mpAdd) > 0 || len(mpRemove) > 0 {
-		log.Debugf("Added %v mappings, removed %v mappings for PID: %v",
+		log.Tracef("Added %v mappings, removed %v mappings for PID: %v",
 			len(mpAdd), len(mpRemove), pid)
 	}
 	return newProcess
@@ -512,7 +512,7 @@ func (pm *ProcessManager) synchronizeMappings(pr process.Process,
 // fast enough and this particular pid is reused again by the system.
 func (pm *ProcessManager) processPIDExit(pid libpf.PID) {
 	exitKTime := times.GetKTime()
-	log.Debugf("- PID: %v", pid)
+	log.Tracef("- PID: %v", pid)
 
 	var err error
 	defer func() {
@@ -526,7 +526,7 @@ func (pm *ProcessManager) processPIDExit(pid libpf.PID) {
 
 	info, pidExists := pm.pidToProcessInfo[pid]
 	if !pidExists {
-		log.Debugf("Skip process exit handling for unknown PID %d", pid)
+		log.Tracef("Skip process exit handling for unknown PID %d", pid)
 		return
 	}
 
@@ -535,7 +535,7 @@ func (pm *ProcessManager) processPIDExit(pid libpf.PID) {
 	if _, pidExitProcessed := pm.exitEvents[pid]; !pidExitProcessed {
 		pm.exitEvents[pid] = exitKTime
 	} else {
-		log.Debugf("Skip duplicate process exit handling for PID %d", pid)
+		log.Tracef("Skip duplicate process exit handling for PID %d", pid)
 		return
 	}
 
@@ -559,7 +559,7 @@ func (pm *ProcessManager) processPIDExit(pid libpf.PID) {
 // about a process. This includes process exit information as well as changed memory mappings.
 func (pm *ProcessManager) SynchronizeProcess(pr process.Process) {
 	pid := pr.PID()
-	log.Debugf("= PID: %v", pid)
+	log.Tracef("= PID: %v", pid)
 
 	pm.mappingStats.numProcAttempts.Add(1)
 	start := time.Now()
@@ -612,7 +612,7 @@ func (pm *ProcessManager) SynchronizeProcess(pr process.Process) {
 	pm.mappingStats.totalProcParseUsec.Add(uint32(elapsed.Microseconds()))
 
 	if pm.synchronizeMappings(pr, mappings) {
-		log.Debugf("+ PID: %v", pid)
+		log.Tracef("+ PID: %v", pid)
 		// TODO: Fine-grained reported_pids handling (evaluate per-PID mapping
 		// synchronization based on per-PID state such as time since last
 		// synchronization). Currently we only remove a PID from reported_pids
@@ -646,7 +646,7 @@ func (pm *ProcessManager) CleanupPIDs() {
 	}
 
 	if len(deadPids) > 0 {
-		log.Debugf("Cleaned up %d dead PIDs", len(deadPids))
+		log.Tracef("Cleaned up %d dead PIDs", len(deadPids))
 	}
 }
 
@@ -698,7 +698,7 @@ func (pm *ProcessManager) ProcessedUntil(traceCaptureKTime times.KTime) {
 	defer pm.mu.Unlock()
 
 	nowKTime := times.GetKTime()
-	log.Debugf("ProcessedUntil captureKT: %v latency: %v ms",
+	log.Tracef("ProcessedUntil captureKT: %v latency: %v ms",
 		traceCaptureKTime, (nowKTime-traceCaptureKTime)/1e6)
 
 	for pid, pidExitKTime := range pm.exitEvents {
@@ -717,7 +717,7 @@ func (pm *ProcessManager) ProcessedUntil(traceCaptureKTime times.KTime) {
 		}
 		delete(pm.interpreters, pid)
 		delete(pm.exitEvents, pid)
-		log.Debugf("PID %v exit latency %v ms", pid, (nowKTime-pidExitKTime)/1e6)
+		log.Tracef("PID %v exit latency %v ms", pid, (nowKTime-pidExitKTime)/1e6)
 	}
 }
 
