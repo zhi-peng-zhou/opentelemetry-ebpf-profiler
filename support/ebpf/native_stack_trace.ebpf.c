@@ -81,6 +81,14 @@ bpf_map_def SEC("maps") kernel_stackmap = {
   .max_entries = 16 * 1024,
 };
 
+#define PROCESS_FILTER_KEY 0
+bpf_map_def SEC("maps") target_pids = {
+  .type        = BPF_MAP_TYPE_HASH,
+  .key_size    = sizeof(u32),
+  .value_size  = sizeof(u8),
+  .max_entries = 10000,
+};
+
 // Record a native frame
 static inline __attribute__((__always_inline__)) ErrorCode
 push_native(Trace *trace, u64 file, u64 line, bool return_address)
@@ -628,6 +636,15 @@ static inline __attribute__((__always_inline__)) int unwind_native(struct pt_reg
   return -1;
 }
 
+static inline __attribute__((__always_inline__)) bool should_trace_pid(u32 pid)
+{
+  u32 key_zero = PROCESS_FILTER_KEY;
+  if (bpf_map_lookup_elem(&target_pids, &key_zero) && bpf_map_lookup_elem(&target_pids, &pid)) {
+    return true;
+  }
+  return false;
+}
+
 SEC("perf_event/native_tracer_entry")
 int native_tracer_entry(struct bpf_perf_event_data *ctx)
 {
@@ -637,6 +654,9 @@ int native_tracer_entry(struct bpf_perf_event_data *ctx)
   u32 tid = id & 0xFFFFFFFF;
 
   if (pid == 0) {
+    return 0;
+  }
+  if (!should_trace_pid(pid)) {
     return 0;
   }
 

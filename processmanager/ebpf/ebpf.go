@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"math/bits"
+	"slices"
 	"sync"
 	"unsafe"
 
@@ -90,6 +91,8 @@ type EbpfHandler interface {
 	// SupportsLPMTrieBatchOperations returns true if the kernel supports eBPF batch operations
 	// on LPM trie maps.
 	SupportsLPMTrieBatchOperations() bool
+
+	ConfigureTargetPIDs(pids []libpf.PID) error
 }
 
 type ebpfMapsImpl struct {
@@ -110,6 +113,7 @@ type ebpfMapsImpl struct {
 	pidPageToMappingInfo  *cebpf.Map
 	unwindInfoArray       *cebpf.Map
 	reportedPIDs          *cebpf.Map
+	targetPids            *cebpf.Map
 
 	errCounterLock sync.Mutex
 	errCounter     map[metrics.MetricID]int64
@@ -224,6 +228,11 @@ func LoadMaps(ctx context.Context, maps map[string]*cebpf.Map) (EbpfHandler, err
 	impl.reportedPIDs, ok = maps["reported_pids"]
 	if !ok {
 		log.Fatalf("Map reported_pids is not available")
+	}
+
+	impl.reportedPIDs, ok = maps["target_pids"]
+	if !ok {
+		log.Fatalf("Map target_pids is not available")
 	}
 
 	impl.exeIDToStackDeltaMaps = make([]*cebpf.Map, len(outerMapsName))
@@ -827,6 +836,68 @@ func (impl *ebpfMapsImpl) SupportsGenericBatchOperations() bool {
 // on LPM trie maps.
 func (impl *ebpfMapsImpl) SupportsLPMTrieBatchOperations() bool {
 	return impl.hasLPMTrieBatchOperations
+}
+
+func (impl *ebpfMapsImpl) ConfigureTargetPIDs(pids []libpf.PID) error {
+	targetPids := impl.targetPids
+	const profileAllProcessKey = 0
+	var oldKeys []uint32
+	entries := targetPids.Iterate()
+	var oldKey uint32
+	var value uint8
+	for entries.Next(unsafe.Pointer(&oldKey), unsafe.Pointer(&value)) {
+		oldKeys = append(oldKeys, oldKey)
+	}
+	var removed []uint32
+	var add []uint32
+	var addValues []uint8
+
+	if len(pids) == 0 {
+		removed = oldKeys
+	} else {
+		slices.DeleteFunc(removed, func(u uint32) bool {
+			return u == 0
+		})
+		add = append(add, profileAllProcessKey)
+		addValues = append(addValues, 1)
+		for _, pid := range pids {
+			if !slices.ContainsFunc(oldKeys, func(u uint32) bool { return u == uint32(pid) }) {
+				add = append(add, uint32(pid))
+				addValues = append(addValues, 1)
+			}
+		}
+
+		for _, oldPid := range oldKeys {
+			if !slices.ContainsFunc(pids, func(u libpf.PID) bool { return uint32(u) == oldPid }) {
+				removed = append(removed, oldPid)
+			}
+		}
+	}
+	if impl.hasGenericBatchOperations {
+		if _, err := targetPids.BatchDelete(ptrCastMarshaler[uint32](removed), nil); err != nil {
+			err = errors.Join(fmt.Errorf("clean ebpf target_pids: %v failed", removed), err)
+			log.Fatal(err)
+		}
+
+		if _, err := targetPids.BatchUpdate(ptrCastMarshaler[uint32](add), ptrCastMarshaler[uint8](addValues), nil); err != nil {
+			err = errors.Join(fmt.Errorf("update ebpf target_pids: %v failed", add), err)
+			log.Fatal(err)
+		}
+	} else {
+		for _, pid := range removed {
+			if err := targetPids.Delete(unsafe.Pointer(&pid)); err != nil {
+				err = errors.Join(fmt.Errorf("delete ebpf target_pid: %v failed", pid), err)
+				log.Fatal(err)
+			}
+		}
+		for i, pid := range add {
+			if err := targetPids.Update(unsafe.Pointer(&pid), unsafe.Pointer(&addValues[i]), cebpf.UpdateAny); err != nil {
+				err = errors.Join(fmt.Errorf("update ebpf target_pid: %v failed", pid), err)
+				log.Fatal(err)
+			}
+		}
+	}
+	return nil
 }
 
 // ptrCastMarshaler is a small wrapper type intended to be used with cilium's BatchUpdate and
