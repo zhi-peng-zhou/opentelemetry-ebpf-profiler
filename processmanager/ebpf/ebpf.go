@@ -230,7 +230,7 @@ func LoadMaps(ctx context.Context, maps map[string]*cebpf.Map) (EbpfHandler, err
 		log.Fatalf("Map reported_pids is not available")
 	}
 
-	impl.reportedPIDs, ok = maps["target_pids"]
+	impl.targetPids, ok = maps["target_pids"]
 	if !ok {
 		log.Fatalf("Map target_pids is not available")
 	}
