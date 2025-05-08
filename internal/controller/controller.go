@@ -87,6 +87,7 @@ func (c *Controller) Start(ctx context.Context) error {
 		OffCPUThreshold:        uint32(c.config.OffCPUThreshold),
 	})
 	if err != nil {
+		c.reporter.Stop()
 		return fmt.Errorf("failed to load eBPF tracer: %w", err)
 	}
 	c.tracer = trc
@@ -107,6 +108,7 @@ func (c *Controller) Start(ctx context.Context) error {
 
 	if c.config.OffCPUThreshold > 0 {
 		if err := trc.StartOffCPUProfiling(); err != nil {
+			c.reporter.Stop()
 			return fmt.Errorf("failed to start off-cpu profiling: %v", err)
 		}
 		log.Printf("Enabled off-cpu profiling")
@@ -117,11 +119,13 @@ func (c *Controller) Start(ctx context.Context) error {
 		log.Printf("Enabled probabilistic profiling")
 	} else {
 		if err := trc.EnableProfiling(); err != nil {
+			c.reporter.Stop()
 			return fmt.Errorf("failed to enable perf events: %w", err)
 		}
 	}
 
 	if err := trc.AttachSchedMonitor(); err != nil {
+		c.reporter.Stop()
 		return fmt.Errorf("failed to attach scheduler monitor: %w", err)
 	}
 
@@ -129,8 +133,8 @@ func (c *Controller) Start(ctx context.Context) error {
 	// change this log line update also the system test.
 	log.Printf("Attached sched monitor")
 
-	if err := startTraceHandling(ctx, c.reporter, intervals, trc,
-		traceHandlerCacheSize); err != nil {
+	if err := startTraceHandling(ctx, c.reporter, intervals, trc, traceHandlerCacheSize); err != nil {
+		c.reporter.Stop()
 		return fmt.Errorf("failed to start trace handling: %w", err)
 	}
 

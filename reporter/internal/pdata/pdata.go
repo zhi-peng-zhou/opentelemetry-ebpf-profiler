@@ -58,6 +58,6 @@ func New(samplesPerSecond int, executablesCacheElements, framesCacheElements uin
 
 // Purge purges all the expired data
 func (p *Pdata) Purge() {
-	p.Executables.PurgeExpired()
-	p.Frames.PurgeExpired()
+	p.Executables.Purge()
+	p.Frames.Purge()
 }

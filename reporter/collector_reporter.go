@@ -6,6 +6,7 @@ package reporter // import "github.com/toliu/opentelemetry-ebpf-profiler/reporte
 import (
 	"context"
 	"maps"
+	"runtime"
 	"time"
 
 	lru "github.com/elastic/go-freelru"
@@ -91,7 +92,8 @@ func (r *CollectorReporter) Start(ctx context.Context) error {
 	}, func() {
 		// Allow the GC to purge expired entries to avoid memory leaks.
 		r.pdata.Purge()
-		r.cgroupv2ID.PurgeExpired()
+		r.cgroupv2ID.Purge()
+		runtime.GC()
 	})
 
 	// When Stop() is called and a signal to 'stop' is received, then:
