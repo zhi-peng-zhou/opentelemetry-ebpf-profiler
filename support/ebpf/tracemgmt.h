@@ -680,9 +680,22 @@ get_usermode_regs(struct pt_regs *ctx, UnwindState *state, bool *has_usermode_re
 
 #endif // TESTING_COREDUMP
 
+
+static inline __attribute__((__always_inline__)) bool should_trace_pid(u32 pid)
+{
+  u32 key_zero = PROCESS_FILTER_KEY;
+  if (bpf_map_lookup_elem(&target_pids, &key_zero) && bpf_map_lookup_elem(&target_pids, &pid)) {
+    return true;
+  }
+  return false;
+}
+
 static inline int collect_trace(
   struct pt_regs *ctx, TraceOrigin origin, u32 pid, u32 tid, u64 trace_timestamp, u64 off_cpu_time)
 {
+  if (!should_trace_pid(pid)) {
+      return 0;
+  }
   // The trace is reused on each call to this function so we have to reset the
   // variables used to maintain state.
   DEBUG_PRINT("Resetting CPU record");

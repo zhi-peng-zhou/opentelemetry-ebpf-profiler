@@ -636,15 +636,6 @@ static inline __attribute__((__always_inline__)) int unwind_native(struct pt_reg
   return -1;
 }
 
-static inline __attribute__((__always_inline__)) bool should_trace_pid(u32 pid)
-{
-  u32 key_zero = PROCESS_FILTER_KEY;
-  if (bpf_map_lookup_elem(&target_pids, &key_zero) && bpf_map_lookup_elem(&target_pids, &pid)) {
-    return true;
-  }
-  return false;
-}
-
 SEC("perf_event/native_tracer_entry")
 int native_tracer_entry(struct bpf_perf_event_data *ctx)
 {
@@ -654,9 +645,6 @@ int native_tracer_entry(struct bpf_perf_event_data *ctx)
   u32 tid = id & 0xFFFFFFFF;
 
   if (pid == 0) {
-    return 0;
-  }
-  if (!should_trace_pid(pid)) {
     return 0;
   }
 
