@@ -81,7 +81,6 @@ bpf_map_def SEC("maps") kernel_stackmap = {
   .max_entries = 16 * 1024,
 };
 
-#define PROCESS_FILTER_KEY 0
 
 bpf_map_def SEC("maps") target_pids = {
   .type        = BPF_MAP_TYPE_HASH,

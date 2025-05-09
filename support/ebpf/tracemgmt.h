@@ -9,6 +9,7 @@
 #include "frametypes.h"
 #include "types.h"
 
+#define PROCESS_FILTER_KEY 0
 
 // MULTI_USE_FUNC generates perf event and kprobe eBPF programs
 // for a given function.
