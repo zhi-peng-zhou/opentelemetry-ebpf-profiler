@@ -9,6 +9,15 @@
 #include "frametypes.h"
 #include "types.h"
 
+
+#define PROCESS_FILTER_KEY 0
+bpf_map_def SEC("maps") target_pids = {
+  .type        = BPF_MAP_TYPE_HASH,
+  .key_size    = sizeof(u32),
+  .value_size  = sizeof(u8),
+  .max_entries = 10000,
+};
+
 // MULTI_USE_FUNC generates perf event and kprobe eBPF programs
 // for a given function.
 #define MULTI_USE_FUNC(func_name)                                                                  \
