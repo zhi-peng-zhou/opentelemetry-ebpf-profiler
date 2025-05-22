@@ -187,12 +187,16 @@ func Start(ctx context.Context, rep reporter.TraceReporter, traceProcessor Trace
 		// Poll the output channels
 		for {
 			select {
-			case traceUpdate := <-traceInChan:
+			case traceUpdate, ok := <-traceInChan:
+				if !ok {
+					return
+				}
 				handler.HandleTrace(traceUpdate)
 			case <-metricsTicker.C:
 				handler.collectMetrics()
-			case <-ctx.Done():
-				return
+				// 这里退出会导致traceInChan发送端阻塞，协程无法退出
+				//case <-ctx.Done():
+				//	return
 			}
 		}
 	}()

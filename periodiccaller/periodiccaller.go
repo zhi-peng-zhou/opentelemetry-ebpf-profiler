@@ -34,7 +34,7 @@ func Start(ctx context.Context, interval time.Duration, callback func()) func() 
 // from <reset> channel until the <ctx> is canceled. Additionally the 'trigger'
 // channel can be used to trigger callback immediately.
 func StartWithManualTrigger(ctx context.Context, interval time.Duration, trigger chan bool,
-	callback func(manualTrigger bool)) func() {
+	callback func(manualTrigger bool), pidEvents chan libpf.PID) func() {
 	ticker := time.NewTicker(interval)
 	go func() {
 		defer ticker.Stop()
@@ -46,6 +46,8 @@ func StartWithManualTrigger(ctx context.Context, interval time.Duration, trigger
 			case <-trigger:
 				callback(true)
 			case <-ctx.Done():
+				// 发送端主动关闭，避免发送端一直阻塞
+				close(pidEvents)
 				return
 			}
 		}

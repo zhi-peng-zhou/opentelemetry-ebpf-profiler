@@ -746,9 +746,9 @@ func (t *Tracer) monitorPIDEventsMap(keys *[]uint32) {
 	if err := eventsMap.NextKey(unsafe.Pointer(&key), unsafe.Pointer(&nextKey)); err != nil {
 		if errors.Is(err, cebpf.ErrKeyNotExist) {
 			log.Trace("Empty pid_events map")
-			return
 		}
-		log.Fatalf("Failed to read from pid_events map: %v", err)
+		log.Warnf("Failed to read from pid_events map: %v", err)
+		return
 	}
 
 	for keyFound {
@@ -926,7 +926,7 @@ func (t *Tracer) StartMapMonitors(ctx context.Context, traceOutChan chan *host.T
 	startPollingPerfEventMonitor(ctx, t.ebpfMaps["trace_events"], t.intervals.TracePollInterval(),
 		t.samplesPerSecond*int(unsafe.Sizeof(C.Trace{})), func(rawTrace []byte) {
 			traceOutChan <- t.loadBpfTrace(rawTrace)
-		})
+		}, traceOutChan)
 
 	pidEvents := make([]uint32, 0)
 	periodiccaller.StartWithManualTrigger(ctx, t.intervals.MonitorInterval(),
@@ -941,7 +941,7 @@ func (t *Tracer) StartMapMonitors(ctx context.Context, traceOutChan chan *host.T
 
 			// Keep the underlying array alive to avoid GC pressure
 			pidEvents = pidEvents[:0]
-		})
+		}, t.pidEvents)
 
 	// translateIDs is a translation table for eBPF IDs into Metric IDs.
 	// Index is the ebpfID, value is the corresponding metricID.
