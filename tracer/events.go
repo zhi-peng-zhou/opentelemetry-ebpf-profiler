@@ -6,6 +6,7 @@ package tracer // import "github.com/toliu/opentelemetry-ebpf-profiler/tracer"
 import (
 	"context"
 	"errors"
+	"github.com/toliu/opentelemetry-ebpf-profiler/host"
 	"os"
 	"sync/atomic"
 	"time"
@@ -45,12 +46,15 @@ func (t *Tracer) processPIDEvents(ctx context.Context) {
 	defer pidCleanupTicker.Stop()
 	for {
 		select {
-		case pid := <-t.pidEvents:
+		case pid, ok := <-t.pidEvents:
+			if !ok { // 由发送端关闭
+				return
+			}
 			t.processManager.SynchronizeProcess(process.New(pid))
 		case <-pidCleanupTicker.C:
 			t.processManager.CleanupPIDs()
-		case <-ctx.Done():
-			return
+			//case <-ctx.Done():
+			//	return
 		}
 	}
 }
@@ -96,11 +100,15 @@ func startPerfEventMonitor(ctx context.Context, perfEventMap *ebpf.Map,
 	go func() {
 		var data perf.Record
 		for {
+			eventReader.SetDeadline(time.Now().Add(2 * time.Second))
 			select {
 			case <-ctx.Done():
 				return
 			default:
 				if err := eventReader.ReadInto(&data); err != nil {
+					if errors.Is(err, os.ErrDeadlineExceeded) {
+						continue
+					}
 					readErrorCount.Add(1)
 					continue
 				}
@@ -134,7 +142,7 @@ func startPerfEventMonitor(ctx context.Context, perfEventMap *ebpf.Map,
 // calls. Returns a function that can be called to retrieve perf event array
 // error counts.
 func startPollingPerfEventMonitor(ctx context.Context, perfEventMap *ebpf.Map,
-	pollFrequency time.Duration, perCPUBufferSize int, triggerFunc func([]byte),
+	pollFrequency time.Duration, perCPUBufferSize int, triggerFunc func([]byte), traceOutChan chan *host.Trace,
 ) func() (lost, noData, readError uint64) {
 	eventReader, err := perf.NewReader(perfEventMap, perCPUBufferSize)
 	if err != nil {
@@ -160,6 +168,8 @@ func startPollingPerfEventMonitor(ctx context.Context, perfEventMap *ebpf.Map,
 			case <-pollTicker.C:
 				// Continue execution below.
 			case <-ctx.Done():
+				// 发送端主动关闭，避免发送端协程一直阻塞
+				close(traceOutChan)
 				break PollLoop
 			}
 
