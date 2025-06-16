@@ -50,7 +50,13 @@ func (t *Tracer) processPIDEvents(ctx context.Context) {
 			if !ok { // 由发送端关闭
 				return
 			}
-			t.processManager.SynchronizeProcess(process.New(pid))
+			// 避免profile退出后还一直处理pidEvent, 打印许多异常且可能造成崩溃
+			select {
+			case <-ctx.Done():
+				continue
+			default:
+				t.processManager.SynchronizeProcess(process.New(pid))
+			}
 		case <-pidCleanupTicker.C:
 			t.processManager.CleanupPIDs()
 			//case <-ctx.Done():
