@@ -145,6 +145,12 @@ type OTLPReporter struct {
 
 	// ipAddress is the IP address of the host.
 	ipAddress string
+
+	cacheMapping         map[traceAndMetaKey]*traceEvents
+	cacheEventSCount     int
+	lastReportTime       time.Time
+	cacheEventSTolerance int
+	cacheEventSTimeout   time.Duration
 }
 
 // NewOTLP returns a new instance of OTLPReporter
@@ -508,10 +514,22 @@ func (r *OTLPReporter) getResource() *resource.Resource {
 
 // getProfile returns an OTLP profile containing all collected samples up to this moment.
 func (r *OTLPReporter) getProfile() (profile *profiles.Profile, startTS, endTS uint64) {
-	traceEvents := r.traceEvents.WLock()
-	samples := maps.Clone(*traceEvents)
-	clear(*traceEvents)
-	r.traceEvents.WUnlock(&traceEvents)
+	_traceEvents := r.traceEvents.WLock()
+	samples := maps.Clone(*_traceEvents)
+	clear(*_traceEvents)
+	r.traceEvents.WUnlock(&_traceEvents)
+	for key, events := range samples {
+		if e, ok := r.cacheMapping[key]; ok {
+			e.timestamps = append(e.timestamps, events.timestamps...)
+		} else {
+			r.cacheMapping[key] = events
+		}
+	}
+	r.cacheEventSCount += len(samples)
+	if r.cacheEventSCount < r.cacheEventSTolerance && time.Since(r.lastReportTime) < r.cacheEventSTimeout {
+		return nil, 0, 0
+	}
+	samples = r.cacheMapping
 
 	// stringMap is a temporary helper that will build the StringTable.
 	// By specification, the first element should be empty.
@@ -715,7 +733,9 @@ func (r *OTLPReporter) getProfile() (profile *profiles.Profile, startTS, endTS u
 
 	profile.DurationNanos = int64(endTS - startTS)
 	profile.TimeNanos = int64(startTS)
-
+	r.cacheMapping = make(map[traceAndMetaKey]*traceEvents)
+	r.cacheEventSCount = 0
+	r.lastReportTime = time.Now()
 	return profile, startTS, endTS
 }
 

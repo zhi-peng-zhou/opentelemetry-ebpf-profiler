@@ -24,6 +24,8 @@ type (
 		Frequency, PresentCores int
 		ReportInterval          time.Duration
 		Intervals               *times.Times
+		CacheEventSTolerance    int
+		CacheEventSTimeout      time.Duration
 	}
 
 	openerConvert ExecutableOpener
@@ -36,9 +38,13 @@ func (o openerConvert) Convert() (colasoft.ReadAtCloser, error) { return o() }
 func ColaSoftReporter(ctx context.Context, cfg *ColaSoftConfig) (*ColaSoft, error) {
 	cacheSize := cfg.CacheSize()
 	otlp := &OTLPReporter{
-		samplesPerSecond: cfg.Frequency,
-		stopSignal:       make(chan libpf.Void),
-		traceEvents:      xsync.NewRWMutex(map[traceAndMetaKey]*traceEvents{}),
+		samplesPerSecond:     cfg.Frequency,
+		stopSignal:           make(chan libpf.Void),
+		traceEvents:          xsync.NewRWMutex(map[traceAndMetaKey]*traceEvents{}),
+		cacheEventSTolerance: cfg.CacheEventSTolerance,
+		cacheEventSTimeout:   cfg.CacheEventSTimeout,
+		cacheEventSCount:     0,
+		cacheMapping:         make(map[traceAndMetaKey]*traceEvents),
 	}
 	var err error
 	if otlp.executables, err = lru.NewSynced[libpf.FileID, execInfo](cacheSize, libpf.FileID.Hash32); err != nil {
@@ -106,6 +112,9 @@ func (c *ColaSoft) SetAddr2liner(addr2liner colasoft.Addr2liner) { c.addr2liner 
 
 func (c *ColaSoft) report(ctx context.Context) error {
 	protocol, _, _ := c.OTLPReporter.getProfile()
+	if protocol == nil {
+		return nil
+	}
 	if c.writer == nil {
 		return nil
 	}
