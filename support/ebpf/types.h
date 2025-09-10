@@ -553,7 +553,7 @@ typedef struct Trace {
   u64 offtime;
 
   // bytes allocated
-//  int mem_alloc;
+  int mem_alloc;
 
   // The frames of the stack trace.
   Frame frames[MAX_FRAME_UNWINDS];
@@ -721,7 +721,7 @@ typedef struct PerCPURecord {
 } PerCPURecord;
 
 // UnwindInfo contains the unwind information needed to unwind one frame
-// from a specific address.
+// from a specific address.`
 typedef struct UnwindInfo {
   u8 opcode;      // main opcode to unwind CFA
   u8 fpOpcode;    // opcode to unwind FP

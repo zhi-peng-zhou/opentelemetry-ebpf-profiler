@@ -294,6 +294,14 @@ func main() {
 				fmt.Printf("failed to load %s: %v \n", mapName, err)
 			}
 			ebpfMaps[mapName] = ebpfMap
+		} else if strings.HasPrefix(mapName, "exe_id_to_") {
+			continue
+		} else {
+			ebpfMap, err := cebpf.NewMap(mapSpec)
+			if err != nil {
+				fmt.Printf("failed to load %s: %v \n", mapName, err)
+			}
+			ebpfMaps[mapName] = ebpfMap
 		}
 	}
 	//fmt.Printf("Loaded %v maps\n", ebpfMaps)

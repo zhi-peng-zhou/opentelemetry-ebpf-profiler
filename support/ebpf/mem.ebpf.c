@@ -235,11 +235,11 @@ static inline int free_enter(struct pt_regs *ctx, void *address) {
     u32 pid = id >> 32;
     u32 tid = id & 0xFFFFFFFF;
     u64 addr = (u64)address;
-    DEBUG_PRINT("free_enter %%llu",addr);
+//    DEBUG_PRINT("free_enter %%llu",addr);
     alloc_info_t *info = bpf_map_lookup_elem(&alloc_infos, &addr);
     if (!info)
         return 0;
-    DEBUG_PRINT("free_enter %p",addr);
+//    DEBUG_PRINT("free_enter %p",addr);
     bpf_map_delete_elem(&alloc_infos, &addr);
 //    update_statistics_del(info->stack_id, info->size);
 //    u32 pid = bpf_get_current_pid_tgid() >> 32;

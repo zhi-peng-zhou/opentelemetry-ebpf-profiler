@@ -712,14 +712,14 @@ static inline int collect_trace(
   trace->tid     = tid;
   trace->ktime   = trace_timestamp;
   trace->offtime = off_cpu_time;
-//  trace->mem_alloc = bytes_alloc;
+  trace->mem_alloc = bytes_alloc;
   if (bpf_get_current_comm(&(trace->comm), sizeof(trace->comm)) < 0) {
     increment_metric(metricID_ErrBPFCurrentComm);
   }
 
   // Get the kernel mode stack trace first
   trace->kernel_stack_id = bpf_get_stackid(ctx, &kernel_stackmap, BPF_F_REUSE_STACKID);
-  DEBUG_PRINT("kernel stack id = %d, %d", trace->kernel_stack_id, bytes_alloc);
+  DEBUG_PRINT("kernel stack id = %d", trace->kernel_stack_id);
 
   // Recursive unwind frames
   int unwinder           = PROG_UNWIND_STOP;
