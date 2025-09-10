@@ -693,7 +693,7 @@ static inline __attribute__((__always_inline__)) bool should_trace_pid(u32 pid)
 }
 
 static inline int collect_trace(
-  struct pt_regs *ctx, TraceOrigin origin, u32 pid, u32 tid, u64 trace_timestamp, u64 off_cpu_time)
+  struct pt_regs *ctx, TraceOrigin origin, u32 pid, u32 tid, u64 trace_timestamp, u64 off_cpu_time, int bytes_alloc)
 {
   if (!should_trace_pid(pid)) {
       return 0;
@@ -712,6 +712,7 @@ static inline int collect_trace(
   trace->tid     = tid;
   trace->ktime   = trace_timestamp;
   trace->offtime = off_cpu_time;
+  trace->mem_alloc = bytes_alloc;
   if (bpf_get_current_comm(&(trace->comm), sizeof(trace->comm)) < 0) {
     increment_metric(metricID_ErrBPFCurrentComm);
   }

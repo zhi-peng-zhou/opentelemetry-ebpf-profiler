@@ -12,6 +12,7 @@ extern bpf_map_def kernel_stackmap;
 extern bpf_map_def pid_page_to_mapping_info;
 extern bpf_map_def metrics;
 extern bpf_map_def report_events;
+extern bpf_map_def events;
 extern bpf_map_def reported_pids;
 extern bpf_map_def pid_events;
 extern bpf_map_def inhibit_events;

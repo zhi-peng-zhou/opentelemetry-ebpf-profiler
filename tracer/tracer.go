@@ -156,6 +156,8 @@ type Config struct {
 	ProbabilisticThreshold uint
 	// OffCPUThreshold is the user defined threshold for off-cpu profiling.
 	OffCPUThreshold uint32
+	// MemProfile switch memprofile
+	MemProfile bool
 	// TargetPIDs is a list of PIDs to target for profiling.
 	TargetPIDs []libpf.PID
 }
@@ -497,6 +499,29 @@ func initializeMapsAndPrograms(kernelSymbols *libpf.SymbolMap, cfg *Config) (
 
 	if cfg.OffCPUThreshold > 0 {
 		if err = loadKProbeUnwinders(coll, ebpfProgs, ebpfMaps["kprobe_progs"], tailCallProgs,
+			cfg.BPFVerifierLogLevel, ebpfMaps["perf_progs"].FD()); err != nil {
+			return nil, nil, fmt.Errorf("failed to load kprobe eBPF programs: %v", err)
+		}
+	}
+
+	if cfg.MemProfile {
+		var progs []progLoaderHelper
+		progss := []string{"kmalloc", "kfree", "malloc_enter", "malloc_exit", "ufree_enter",
+			"calloc_enter", "calloc_exit", "realloc_enter", "realloc_exit", "mmap_enter", "mmap_exit", "munmap_enter",
+			"posix_memalign_enter", "posix_memalign_exit", "aligned_alloc_enter", "aligned_alloc_exit", "valloc_enter", "valloc_exit",
+			"memalign_enter", "memalign_exit", "pvalloc_enter", "pvalloc_exit"}
+
+		uProgs := make([]progLoaderHelper, len(progss))
+		for _, p := range progss {
+			uProgs = append(uProgs, progLoaderHelper{name: p, noTailCallTarget: true, enable: true})
+		}
+		if cfg.OffCPUThreshold > 0 {
+			progs = uProgs
+		} else {
+			progs = make([]progLoaderHelper, len(tailCallProgs)+len(uProgs))
+			progs = append(progs, uProgs...)
+		}
+		if err = loadUProbeUnwinders(coll, ebpfProgs, ebpfMaps["kprobe_progs"], progs,
 			cfg.BPFVerifierLogLevel, ebpfMaps["perf_progs"].FD()); err != nil {
 			return nil, nil, fmt.Errorf("failed to load kprobe eBPF programs: %v", err)
 		}
@@ -1295,6 +1320,22 @@ func (t *Tracer) StartProbabilisticProfiling(ctx context.Context) {
 	periodiccaller.Start(ctx, t.probabilisticInterval, func() {
 		t.probabilisticProfile(t.probabilisticInterval, t.probabilisticThreshold)
 	})
+}
+
+// StartMemProfiling starts off-cpu profiling by attaching the programs to the hooks.
+func (t *Tracer) StartMemProfiling(execute string) error {
+	t.AttachUProbes(execute, "malloc", false, true)
+	t.AttachUProbes(execute, "calloc", false, true)
+	t.AttachUProbes(execute, "realloc", false, true)
+	t.AttachUProbes(execute, "mmap", true, true) // failed on jemalloc
+	t.AttachUProbes(execute, "posix_memalign", false, true)
+	t.AttachUProbes(execute, "valloc", true, true) // failed on Android, is deprecated in libc.so from bionic directory
+	t.AttachUProbes(execute, "memalign", false, true)
+	t.AttachUProbes(execute, "pvalloc", true, true)       // failed on Android, is deprecated in libc.so from bionic directory
+	t.AttachUProbes(execute, "aligned_alloc", true, true) // added in C11
+	t.AttachUProbes(execute, "free", false, false)
+	t.AttachUProbes(execute, "munmap", true, false) // failed on jemalloc
+	return nil
 }
 
 // StartOffCPUProfiling starts off-cpu profiling by attaching the programs to the hooks.
