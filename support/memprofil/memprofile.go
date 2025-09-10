@@ -286,7 +286,7 @@ func main() {
 	ebpfMaps := make(map[string]*cebpf.Map)
 	ebpfProgs := make(map[string]*cebpf.Program)
 
-	maps := []string{"stack_traces", "size_record", "comvined_alloc_infos", "alloc_infos", "events", "memptrs"}
+	maps := []string{"stack_traces", "size_record", "alloc_infos", "memptrs"}
 	for mapName, mapSpec := range coll.Maps {
 		if slices.Contains(maps, mapName) {
 			ebpfMap, err := cebpf.NewMap(mapSpec)

@@ -142,12 +142,12 @@ bpf_map_def SEC("maps") memptrs = {
   .max_entries = 1000000,
 };
 
-bpf_map_def SEC("maps") events = {
-  .type        = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-  .key_size    = sizeof(int),
-  .value_size  = 0,
-  .max_entries = 0,
-};
+//bpf_map_def SEC("maps") events = {
+//  .type        = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
+//  .key_size    = sizeof(int),
+//  .value_size  = 0,
+//  .max_entries = 0,
+//};
 
 
 //static inline int update_statistics_add(u64 stack_id, u64 sz) {
