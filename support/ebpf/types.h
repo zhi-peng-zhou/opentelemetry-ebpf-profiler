@@ -553,7 +553,7 @@ typedef struct Trace {
   u64 offtime;
 
   // bytes allocated
-  int mem_alloc;
+//  int mem_alloc;
 
   // The frames of the stack trace.
   Frame frames[MAX_FRAME_UNWINDS];
