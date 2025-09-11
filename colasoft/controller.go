@@ -45,6 +45,7 @@ func (c *Collector) Start(ctx context.Context, freq, offCpuThreshold int, interv
 		Tracers:         "perl,php,python,hotspot,ruby,v8",
 		OffCPUThreshold: uint(offCpuThreshold),
 		TargetPIDs:      targetPIDs,
+		MemProfile:      true,
 	}
 	ctrl := controller.New(cfg)
 	if err = ctrl.Start(ctx); err != nil {
