@@ -506,11 +506,11 @@ func initializeMapsAndPrograms(kernelSymbols *libpf.SymbolMap, cfg *Config) (
 
 	if cfg.MemProfile {
 		var progs []progLoaderHelper
-		progss := []string{"kmalloc", "kfree", "malloc_enter", "malloc_exit", "ufree_enter",
+		progss := []string{"malloc_enter", "malloc_exit", "ufree_enter",
 			"calloc_enter", "calloc_exit", "realloc_enter", "realloc_exit", "mmap_enter", "mmap_exit", "munmap_enter",
 			"posix_memalign_enter", "posix_memalign_exit", "aligned_alloc_enter", "aligned_alloc_exit", "valloc_enter", "valloc_exit",
 			"memalign_enter", "memalign_exit", "pvalloc_enter", "pvalloc_exit"}
-
+		// "kmalloc", "kfree",
 		uProgs := make([]progLoaderHelper, len(progss))
 		for _, p := range progss {
 			uProgs = append(uProgs, progLoaderHelper{name: p, noTailCallTarget: true, enable: true})
@@ -519,6 +519,7 @@ func initializeMapsAndPrograms(kernelSymbols *libpf.SymbolMap, cfg *Config) (
 			progs = uProgs
 		} else {
 			progs = make([]progLoaderHelper, len(tailCallProgs)+len(uProgs))
+			progs = append(progs, tailCallProgs...)
 			progs = append(progs, uProgs...)
 		}
 		if err = loadUProbeUnwinders(coll, ebpfProgs, ebpfMaps["kprobe_progs"], progs,
