@@ -96,7 +96,7 @@ func (b *baseReporter) ExecutableMetadata(args *ExecutableMetadataArgs) {
 func (*baseReporter) SupportsReportTraceEvent() bool { return true }
 
 func (b *baseReporter) ReportTraceEvent(trace *libpf.Trace, meta *samples.TraceEventMeta) {
-	if meta.Origin != support.TraceOriginSampling && meta.Origin != support.TraceOriginOffCPU {
+	if meta.Origin != support.TraceOriginSampling && meta.Origin != support.TraceOriginOffCPU && meta.Origin != support.TraceOriginHeap {
 		// At the moment only on-CPU and off-CPU traces are reported.
 		log.Errorf("Skip reporting trace for unexpected %d origin", meta.Origin)
 		return
@@ -130,6 +130,7 @@ func (b *baseReporter) ReportTraceEvent(trace *libpf.Trace, meta *samples.TraceE
 	if events, exists := (*traceEventsMap)[meta.Origin][key]; exists {
 		events.Timestamps = append(events.Timestamps, uint64(meta.Timestamp))
 		events.OffTimes = append(events.OffTimes, meta.OffTime)
+		events.MemAlloc = append(events.MemAlloc, meta.MemAlloc)
 		(*traceEventsMap)[meta.Origin][key] = events
 		return
 	}
@@ -143,6 +144,7 @@ func (b *baseReporter) ReportTraceEvent(trace *libpf.Trace, meta *samples.TraceE
 		MappingFileOffsets: trace.MappingFileOffsets,
 		Timestamps:         []uint64{uint64(meta.Timestamp)},
 		OffTimes:           []int64{meta.OffTime},
+		MemAlloc:           []int64{meta.MemAlloc},
 	}
 }
 

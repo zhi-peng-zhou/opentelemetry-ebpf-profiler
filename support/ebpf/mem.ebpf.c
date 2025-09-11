@@ -192,7 +192,7 @@ static inline int alloc_enter(struct pt_regs *ctx, size_t size, u32 type_index) 
 
 
 
-static inline int alloc_exit2(struct pt_regs *ctx, u64 address, u32 type_index) {
+static inline u64 alloc_exit2(struct pt_regs *ctx, u64 address, u32 type_index) {
     u64 id  = bpf_get_current_pid_tgid();
     u32 pid = id >> 32;
     u32 tid = id & 0xFFFFFFFF;
@@ -221,7 +221,8 @@ static inline int alloc_exit2(struct pt_regs *ctx, u64 address, u32 type_index) 
     alloc_info_t ai = {*size64, stack_id, bpf_ktime_get_ns()};
     bpf_map_update_elem(&alloc_infos, &address, &ai, BPF_ANY);
 //    bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &e, sizeof(e));
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, (int)*size64);
+    return *size64;
+//    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, (int)*size64);
 //    return 0;
 }
 
@@ -230,10 +231,10 @@ static inline int alloc_exit(struct pt_regs *ctx, u32 type_index) {
 }
 
 
-static inline int free_enter(struct pt_regs *ctx, void *address) {
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
+static inline u64 free_entry(struct pt_regs *ctx, void *address) {
+//    u64 id  = bpf_get_current_pid_tgid();
+//    u32 pid = id >> 32;
+//    u32 tid = id & 0xFFFFFFFF;
     u64 addr = (u64)address;
 //    DEBUG_PRINT("free_enter %%llu",addr);
     alloc_info_t *info = bpf_map_lookup_elem(&alloc_infos, &addr);
@@ -244,15 +245,19 @@ static inline int free_enter(struct pt_regs *ctx, void *address) {
 //    update_statistics_del(info->stack_id, info->size);
 //    u32 pid = bpf_get_current_pid_tgid() >> 32;
 
-    event e = {};
-    e.size = info->size;
-    e.pid = pid;
-    e.type_t = 0;
-    e.stack_id = info->stack_id;
-    u64 ts = bpf_ktime_get_ns();
-    e.timestamp_ns = ts;
+//    event e = {};
+//    e.size = info->size;
+//    e.pid = pid;
+//    e.type_t = 0;
+//    e.stack_id = info->stack_id;
+//    u64 ts = bpf_ktime_get_ns();
+//    u64 id  = bpf_get_current_pid_tgid();
+//    u32 pid = id >> 32;
+//    u32 tid = id & 0xFFFFFFFF;
+//    e.timestamp_ns = ts;
 //    int i_size = 0 - (int)*size64);
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, -info->size);
+    return info->size;
+//    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, -(int)info->size);
 //    bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &e, sizeof(e));
 //    return 0;
 }
@@ -266,14 +271,23 @@ int malloc_enter(struct pt_regs *ctx, size_t size) {
 
 SEC("uretprobe/malloc")
 int malloc_exit(struct pt_regs *ctx) {
-    printt("alloc_exit2：key: %d", 1);
-    return alloc_exit2(ctx, PT_REGS_RC(ctx), MALLOC);
+    u64 s = alloc_exit2(ctx, PT_REGS_RC(ctx), MALLOC);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
 }
 
 SEC("uprobe/free")
-int ufree_enter(struct pt_regs *ctx) {
+int free_enter(struct pt_regs *ctx) {
     void *address = (void *)PT_REGS_PARM1(ctx);
-    return free_enter(ctx, address);
+    u64 s = free_entry(ctx, address);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, s);
 }
 
 SEC("uprobe/calloc")
@@ -284,18 +298,34 @@ int calloc_enter(struct pt_regs *ctx) {
 }
 SEC("uretprobe/calloc")
 int calloc_exit(struct pt_regs *ctx) {
-        return alloc_exit(ctx, CALLOC);
+    u64 s = alloc_exit(ctx, CALLOC);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
 }
 SEC("uprobe/realloc")
 int realloc_enter(struct pt_regs *ctx) {
     void *ptr = (void *)PT_REGS_PARM1(ctx);
     size_t size = (size_t)PT_REGS_PARM2(ctx);
-    free_enter(ctx, ptr);
-    return alloc_enter(ctx, size, REALLOC);
+    u64 s = free_entry(ctx, ptr);
+    alloc_enter(ctx, size, REALLOC);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, s);
 }
+
 SEC("uretprobe/realloc")
 int realloc_exit(struct pt_regs *ctx) {
-    return alloc_exit(ctx, REALLOC);
+    u64 s = alloc_exit(ctx, REALLOC);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
 }
 SEC("uprobe/mmap")
 int mmap_enter(struct pt_regs *ctx) {
@@ -304,12 +334,22 @@ int mmap_enter(struct pt_regs *ctx) {
 }
 SEC("uretprobe/mmap")
 int mmap_exit(struct pt_regs *ctx) {
-    return alloc_exit(ctx, MMAP);
+    u64 s = alloc_exit(ctx, MMAP);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
 }
 SEC("uprobe/munmap")
 int munmap_enter(struct pt_regs *ctx) {
     void *address = (void *)PT_REGS_PARM2(ctx);
-    return free_enter(ctx, address);
+    u64 s = free_entry(ctx, address);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, s);
 }
 SEC("uprobe/posix_memalign")
 int posix_memalign_enter(struct pt_regs *ctx) {
@@ -324,7 +364,9 @@ int posix_memalign_enter(struct pt_regs *ctx) {
 }
 SEC("uretprobe/posix_memalign")
 int posix_memalign_exit(struct pt_regs *ctx) {
-    u32 tid = bpf_get_current_pid_tgid();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
     u64 *memptr64 = bpf_map_lookup_elem(&memptrs, &tid);
     void *addr;
     if (memptr64 == 0)
@@ -333,7 +375,10 @@ int posix_memalign_exit(struct pt_regs *ctx) {
     if (bpf_probe_read_user(&addr, sizeof(void*), (void*)(size_t)*memptr64))
             return 0;
     u64 addr64 = (u64)(size_t)addr;
-    return alloc_exit2(ctx, addr64, POSIX_MEMALIGN);
+    u64 s = alloc_exit2(ctx, addr64, POSIX_MEMALIGN);
+    u64 ts = bpf_ktime_get_ns();
+
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
 }
 SEC("uprobe/aligned_alloc")
 int aligned_alloc_enter(struct pt_regs *ctx) {
@@ -342,7 +387,12 @@ int aligned_alloc_enter(struct pt_regs *ctx) {
 }
 SEC("uretprobe/aligned_alloc")
 int aligned_alloc_exit(struct pt_regs *ctx) {
-    return alloc_exit(ctx, ALIGNED_ALLOC);
+    u64 s = alloc_exit(ctx, ALIGNED_ALLOC);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
 }
 SEC("uprobe/valloc")
 int valloc_enter(struct pt_regs *ctx) {
@@ -351,7 +401,12 @@ int valloc_enter(struct pt_regs *ctx) {
 }
 SEC("uretprobe/valloc")
 int valloc_exit(struct pt_regs *ctx) {
-    return alloc_exit(ctx, VALLOC);
+    u64 s = alloc_exit(ctx, VALLOC);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
 }
 SEC("uprobe/memalign")
 int memalign_enter(struct pt_regs *ctx) {
@@ -360,7 +415,12 @@ int memalign_enter(struct pt_regs *ctx) {
 }
 SEC("uretprobe/memalign")
 int memalign_exit(struct pt_regs *ctx) {
-    return alloc_exit(ctx, MEMALIGN);
+    u64 s = alloc_exit(ctx, MEMALIGN);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
 }
 SEC("uprobe/pvalloc")
 int pvalloc_enter(struct pt_regs *ctx) {
@@ -369,22 +429,37 @@ int pvalloc_enter(struct pt_regs *ctx) {
 }
 SEC("uretprobe/pvalloc")
 int pvalloc_exit(struct pt_regs *ctx) {
-    return alloc_exit(ctx, PVALLOC);
+    u64 s = alloc_exit(ctx, PVALLOC);
+    u64 ts = bpf_ktime_get_ns();
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
 }
 
 
-SEC("tracepoint/kmem/kfree")
-int kfree(struct kfree_event *info)
-{
-    return free_enter((struct pt_regs *)info, (void *)info->ptr);
-}
-
-SEC("tracepoint/kmem/kmalloc")
-int kmalloc(struct kmalloc_event *info)
-{
-    alloc_enter((struct pt_regs *)info, info-> bytes_alloc, MALLOC);
-    return alloc_exit2((struct pt_regs *)info, (u64)info->ptr, MALLOC);
-}
+//SEC("tracepoint/kmem/kfree")
+//int kfree(struct kfree_event *info)
+//{
+//    int s = free_enter((struct pt_regs *)info, (void *)info->ptr);
+//    u64 ts = bpf_ktime_get_ns();
+//    u64 id  = bpf_get_current_pid_tgid();
+//    u32 pid = id >> 32;
+//    u32 tid = id & 0xFFFFFFFF;
+//    return collect_trace(info, TRACE_HEAP_ALLOC, pid, tid, ts, 0, s);
+//}
+//
+//SEC("tracepoint/kmem/kmalloc")
+//int kmalloc(struct kmalloc_event *info)
+//{
+//    alloc_enter((struct pt_regs *)info, info-> bytes_alloc, MALLOC);
+//    int s = alloc_exit2((struct pt_regs *)info, (u64)info->ptr, MALLOC);
+//    u64 ts = bpf_ktime_get_ns();
+//    u64 id  = bpf_get_current_pid_tgid();
+//    u32 pid = id >> 32;
+//    u32 tid = id & 0xFFFFFFFF;
+//    return collect_trace(info, TRACE_HEAP_ALLOC, pid, tid, ts, 0, s);
+//}
 
 //
 //SEC("tracepoint/kmem/kmem_cache_alloc")

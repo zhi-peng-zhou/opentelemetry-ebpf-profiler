@@ -29,8 +29,7 @@ func (p *Pdata) Generate(events map[libpf.Origin]samples.KeyToEventMapping) ppro
 	profiles := pprofile.NewProfiles()
 	rp := profiles.ResourceProfiles().AppendEmpty()
 	sp := rp.ScopeProfiles().AppendEmpty()
-	for _, origin := range []libpf.Origin{support.TraceOriginSampling,
-		support.TraceOriginOffCPU} {
+	for _, origin := range []libpf.Origin{support.TraceOriginSampling, support.TraceOriginOffCPU} {
 		if len(events[origin]) == 0 {
 			// Do not append empty profiles, if there
 			// is not profiling data for this origin.
@@ -84,6 +83,9 @@ func (p *Pdata) setProfile(
 	case support.TraceOriginOffCPU:
 		st.SetTypeStrindex(getStringMapIndex(stringMap, "events"))
 		st.SetUnitStrindex(getStringMapIndex(stringMap, "nanoseconds"))
+	case support.TraceOriginHeap:
+		st.SetTypeStrindex(getStringMapIndex(stringMap, "space"))
+		st.SetUnitStrindex(getStringMapIndex(stringMap, "bytes"))
 	default:
 		log.Errorf("Generating profile for unsupported origin %d", origin)
 		return
@@ -110,6 +112,13 @@ func (p *Pdata) setProfile(
 			sample.Value().Append(1)
 		case support.TraceOriginOffCPU:
 			sample.Value().Append(traceInfo.OffTimes...)
+		case support.TraceOriginHeap:
+			for i, m := range traceInfo.MemAlloc {
+				if traceInfo.OffTimes[i] == 0 {
+					m = -m
+				}
+				sample.Value().Append(m)
+			}
 		}
 
 		// Walk every frame of the trace.

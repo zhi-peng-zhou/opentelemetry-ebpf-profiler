@@ -506,7 +506,7 @@ func initializeMapsAndPrograms(kernelSymbols *libpf.SymbolMap, cfg *Config) (
 
 	if cfg.MemProfile {
 		var progs []progLoaderHelper
-		progss := []string{"malloc_enter", "malloc_exit", "ufree_enter",
+		progss := []string{"malloc_enter", "malloc_exit", "free_enter",
 			"calloc_enter", "calloc_exit", "realloc_enter", "realloc_exit", "mmap_enter", "mmap_exit", "munmap_enter",
 			"posix_memalign_enter", "posix_memalign_exit", "aligned_alloc_enter", "aligned_alloc_exit", "valloc_enter", "valloc_exit",
 			"memalign_enter", "memalign_exit", "pvalloc_enter", "pvalloc_exit"}

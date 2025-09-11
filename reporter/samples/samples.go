@@ -15,6 +15,7 @@ type TraceEventMeta struct {
 	CPU            int
 	Origin         libpf.Origin
 	OffTime        int64
+	MemAlloc       int64 // bytes
 }
 
 // TraceEvents holds known information about a trace.
@@ -27,6 +28,7 @@ type TraceEvents struct {
 	MappingFileOffsets []uint64
 	Timestamps         []uint64 // in nanoseconds
 	OffTimes           []int64  // in nanoseconds
+	MemAlloc           []int64
 }
 
 // TraceAndMetaKey is the deduplication key for samples. This **must always**
