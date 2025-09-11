@@ -1023,11 +1023,12 @@ func (t *Tracer) loadBpfTrace(raw []byte, cpu int) *host.Trace {
 		TID:              libpf.PID(ptr.tid),
 		Origin:           libpf.Origin(ptr.origin),
 		OffTime:          int64(ptr.offtime),
+		MemAlloc:         int64(ptr.mem_alloc),
 		KTime:            times.KTime(ptr.ktime),
 		CPU:              cpu,
 	}
 
-	if trace.Origin != support.TraceOriginSampling && trace.Origin != support.TraceOriginOffCPU {
+	if trace.Origin != support.TraceOriginSampling && trace.Origin != support.TraceOriginOffCPU && trace.Origin != support.TraceOriginHeap {
 		log.Warnf("Skip handling trace from unexpected %d origin", trace.Origin)
 		return nil
 	}
@@ -1070,6 +1071,9 @@ func (t *Tracer) loadBpfTrace(raw []byte, cpu int) *host.Trace {
 			Type:          libpf.FrameType(rawFrame.kind),
 			ReturnAddress: rawFrame.return_address != 0,
 		}
+	}
+	if trace.Origin == support.TraceOriginHeap {
+		log.Infof("trace: %v, type %d", trace, trace.OffTime)
 	}
 	return trace
 }
