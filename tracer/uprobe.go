@@ -96,3 +96,44 @@ func (t *Tracer) AttachUProbes(execute string, symbol string, canFail bool, need
 	}
 	return
 }
+
+// StartCMemProfiling starts off-cpu profiling by attaching the programs to the hooks.
+func (t *Tracer) StartCMemProfiling(execute string) error {
+	t.AttachUProbes(execute, "malloc", false, true)
+	t.AttachUProbes(execute, "calloc", false, true)
+	t.AttachUProbes(execute, "realloc", false, true)
+	t.AttachUProbes(execute, "mmap", true, true) // failed on jemalloc
+	t.AttachUProbes(execute, "posix_memalign", false, true)
+	t.AttachUProbes(execute, "valloc", true, true) // failed on Android, is deprecated in libc.so from bionic directory
+	t.AttachUProbes(execute, "memalign", false, true)
+	t.AttachUProbes(execute, "pvalloc", true, true)       // failed on Android, is deprecated in libc.so from bionic directory
+	t.AttachUProbes(execute, "aligned_alloc", true, true) // added in C11
+	t.AttachUProbes(execute, "free", false, false)
+	t.AttachUProbes(execute, "munmap", true, false) // failed on jemalloc
+	return nil
+}
+
+// StartCMemProfiling starts off-cpu profiling by attaching the programs to the hooks.
+func (t *Tracer) StartPythonMemProfiling(execute string) error {
+	// _PyMem_RawCalloc
+	//_PyMem_RawMalloc
+	//_PyMem_RawRealloc
+	//_PyMem_RawFree
+	//_PyObject_Malloc
+	//_PyObject_Calloc
+	//_PyObject_Realloc
+	//_PyObject_Free
+
+	t.AttachUProbes(execute, "malloc", false, true)
+	t.AttachUProbes(execute, "calloc", false, true)
+	t.AttachUProbes(execute, "realloc", false, true)
+	t.AttachUProbes(execute, "mmap", true, true) // failed on jemalloc
+	t.AttachUProbes(execute, "posix_memalign", false, true)
+	t.AttachUProbes(execute, "valloc", true, true) // failed on Android, is deprecated in libc.so from bionic directory
+	t.AttachUProbes(execute, "memalign", false, true)
+	t.AttachUProbes(execute, "pvalloc", true, true)       // failed on Android, is deprecated in libc.so from bionic directory
+	t.AttachUProbes(execute, "aligned_alloc", true, true) // added in C11
+	t.AttachUProbes(execute, "free", false, false)
+	t.AttachUProbes(execute, "munmap", true, false) // failed on jemalloc
+	return nil
+}

@@ -321,6 +321,9 @@ func main() {
 		"posix_memalign_enter", "posix_memalign_exit", "aligned_alloc_enter", "aligned_alloc_exit", "valloc_enter", "valloc_exit",
 		"memalign_enter", "memalign_exit", "pvalloc_enter", "pvalloc_exit"}
 	for pName, p := range coll.Programs {
+		if strings.HasPrefix(pName, "_") {
+			fmt.Println(pName)
+		}
 		if slices.Contains(progs, pName) {
 			ebpfProgs[pName], err = cebpf.NewProgram(p)
 			if err != nil {

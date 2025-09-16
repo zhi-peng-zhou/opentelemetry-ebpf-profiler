@@ -117,9 +117,9 @@ func (c *Controller) Start(ctx context.Context) error {
 		log.Printf("Enabled off-cpu profiling")
 	}
 
-	//if c.config.MemProfile {
-	//	trc.StartMemProfiling("")
-	//}
+	if c.config.MemProfile {
+		trc.StartMemProfiling("")
+	}
 
 	if c.config.ProbabilisticThreshold < tracer.ProbabilisticThresholdMax {
 		trc.StartProbabilisticProfiling(ctx)

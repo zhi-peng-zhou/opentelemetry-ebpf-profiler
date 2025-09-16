@@ -506,15 +506,25 @@ func initializeMapsAndPrograms(kernelSymbols *libpf.SymbolMap, cfg *Config) (
 
 	if cfg.MemProfile {
 		var progs []progLoaderHelper
-		progss := []string{"malloc_enter", "malloc_exit", "free_enter",
+		cprogss := []string{"malloc_enter", "malloc_exit", "free_enter",
 			"calloc_enter", "calloc_exit", "realloc_enter", "realloc_exit", "mmap_enter", "mmap_exit", "munmap_enter",
 			"posix_memalign_enter", "posix_memalign_exit", "aligned_alloc_enter", "aligned_alloc_exit", "valloc_enter", "valloc_exit",
 			"memalign_enter", "memalign_exit", "pvalloc_enter", "pvalloc_exit"}
-		// "kmalloc", "kfree",
-		uProgs := make([]progLoaderHelper, len(progss))
-		for _, p := range progss {
+
+		py_progss := []string{"_PyObject_Free_enter", "_PyObject_Malloc_exit", "_PyMem_RawCalloc_exit",
+			"_PyMem_RawRealloc_exit", "_PyObject_Malloc_enter", "_PyObject_Realloc_exit",
+			"_PyMem_RawCalloc_enter", "_PyObject_Realloc_enter", "_PyMem_RawMalloc_exit", "_PyObject_Calloc_enter",
+			"_PyMem_RawRealloc_enter", "_PyObject_Calloc_exit", "_PyMem_RawMalloc_enter", "_PyMem_RawFree_enter"}
+
+		//var uProgs []progLoaderHelper
+		uProgs := make([]progLoaderHelper, len(cprogss))
+		for _, p := range cprogss {
 			uProgs = append(uProgs, progLoaderHelper{name: p, noTailCallTarget: true, enable: true})
 		}
+		for _, p := range py_progss {
+			uProgs = append(uProgs, progLoaderHelper{name: p, noTailCallTarget: true, enable: true})
+		}
+
 		if cfg.OffCPUThreshold > 0 {
 			progs = uProgs
 		} else {
@@ -1071,9 +1081,6 @@ func (t *Tracer) loadBpfTrace(raw []byte, cpu int) *host.Trace {
 			Type:          libpf.FrameType(rawFrame.kind),
 			ReturnAddress: rawFrame.return_address != 0,
 		}
-	}
-	if trace.Origin == support.TraceOriginHeap {
-		log.Infof("trace: %v, type %d", trace, trace.OffTime)
 	}
 	return trace
 }
