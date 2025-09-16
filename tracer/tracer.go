@@ -511,10 +511,31 @@ func initializeMapsAndPrograms(kernelSymbols *libpf.SymbolMap, cfg *Config) (
 			"posix_memalign_enter", "posix_memalign_exit", "aligned_alloc_enter", "aligned_alloc_exit", "valloc_enter", "valloc_exit",
 			"memalign_enter", "memalign_exit", "pvalloc_enter", "pvalloc_exit"}
 
-		py_progss := []string{"_PyObject_Free_enter", "_PyObject_Malloc_exit", "_PyMem_RawCalloc_exit",
-			"_PyMem_RawRealloc_exit", "_PyObject_Malloc_enter", "_PyObject_Realloc_exit",
-			"_PyMem_RawCalloc_enter", "_PyObject_Realloc_enter", "_PyMem_RawMalloc_exit", "_PyObject_Calloc_enter",
-			"_PyMem_RawRealloc_enter", "_PyObject_Calloc_exit", "_PyMem_RawMalloc_enter", "_PyMem_RawFree_enter"}
+		py_progss := []string{
+			"PyObject_Malloc_enter",
+			"PyObject_Malloc_exit",
+			"PyObject_Calloc_enter",
+			"PyObject_Calloc_exit",
+			"PyObject_Realloc_enter",
+			"PyObject_Realloc_exit",
+			"PyObject_Free_enter",
+
+			"PyMem_RawMalloc_enter",
+			"PyMem_RawMalloc_exit",
+			"PyMem_RawCalloc_enter",
+			"PyMem_RawCalloc_exit",
+			"PyMem_RawRealloc_enter",
+			"PyMem_RawRealloc_exit",
+			"PyMem_RawFree_enter",
+
+			"PyMem_Malloc_enter",
+			"PyMem_Malloc_exit",
+			"PyMem_Calloc_enter",
+			"PyMem_Calloc_exit",
+			"PyMem_Realloc_enter",
+			"PyMem_Realloc_exit",
+			"PyMem_Free_enter",
+		}
 
 		//var uProgs []progLoaderHelper
 		uProgs := make([]progLoaderHelper, len(cprogss))

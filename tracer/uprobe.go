@@ -115,25 +115,20 @@ func (t *Tracer) StartCMemProfiling(execute string) error {
 
 // StartCMemProfiling starts off-cpu profiling by attaching the programs to the hooks.
 func (t *Tracer) StartPythonMemProfiling(execute string) error {
-	// _PyMem_RawCalloc
-	//_PyMem_RawMalloc
-	//_PyMem_RawRealloc
-	//_PyMem_RawFree
-	//_PyObject_Malloc
-	//_PyObject_Calloc
-	//_PyObject_Realloc
-	//_PyObject_Free
+	t.AttachUProbes(execute, "PyObject_Malloc", false, true)
+	t.AttachUProbes(execute, "PyObject_Calloc", false, true)
+	t.AttachUProbes(execute, "PyObject_Realloc", false, true)
+	t.AttachUProbes(execute, "PyObject_Free", false, false)
 
-	t.AttachUProbes(execute, "malloc", false, true)
-	t.AttachUProbes(execute, "calloc", false, true)
-	t.AttachUProbes(execute, "realloc", false, true)
-	t.AttachUProbes(execute, "mmap", true, true) // failed on jemalloc
-	t.AttachUProbes(execute, "posix_memalign", false, true)
-	t.AttachUProbes(execute, "valloc", true, true) // failed on Android, is deprecated in libc.so from bionic directory
-	t.AttachUProbes(execute, "memalign", false, true)
-	t.AttachUProbes(execute, "pvalloc", true, true)       // failed on Android, is deprecated in libc.so from bionic directory
-	t.AttachUProbes(execute, "aligned_alloc", true, true) // added in C11
-	t.AttachUProbes(execute, "free", false, false)
-	t.AttachUProbes(execute, "munmap", true, false) // failed on jemalloc
+	t.AttachUProbes(execute, "PyMem_Realloc", false, true)
+	t.AttachUProbes(execute, "PyMem_Calloc", false, true)
+	t.AttachUProbes(execute, "PyMem_Realloc", false, true)
+	t.AttachUProbes(execute, "PyMem_Free", false, false)
+
+	t.AttachUProbes(execute, "PyMem_RawMalloc", false, true)
+	t.AttachUProbes(execute, "PyMem_RawCalloc", false, true)
+	t.AttachUProbes(execute, "PyMem_RawRealloc", false, true)
+	t.AttachUProbes(execute, "PyMem_RawFree", false, false)
+
 	return nil
 }

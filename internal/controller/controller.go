@@ -117,7 +117,7 @@ func (c *Controller) Start(ctx context.Context) error {
 		log.Printf("Enabled off-cpu profiling")
 	}
 
-	if c.config.MemProfile {
+	if c.config.MemProfile { // todo
 		trc.StartMemProfiling("")
 	}
 
