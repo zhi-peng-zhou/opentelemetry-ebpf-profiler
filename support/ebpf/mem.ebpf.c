@@ -29,10 +29,10 @@
 #define PYREALLOC 18
 #define PYFREE 19
 
-#define PYMEMMALLOC 16
-#define PYMEMCALLOC 17
-#define PYMEMREALLOC 18
-#define PYMEMFREE 19
+#define PYMEMMALLOC 20
+#define PYMEMCALLOC 21
+#define PYMEMREALLOC 22
+#define PYMEMFREE 23
 
 
 //#define deDEBUG_FLAGS 1
