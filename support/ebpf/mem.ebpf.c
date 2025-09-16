@@ -17,6 +17,18 @@
 #define ALIGNED_ALLOC 9
 #define FREE 10
 #define MUNMAP 11
+
+
+#define PYRAWMALLOC 12
+#define PYRAWCALLOC 13
+#define PYRAWREALLOC 14
+#define PYRAWFREE 15
+
+#define PYMALLOC 16
+#define PYCALLOC 17
+#define PYREALLOC 18
+#define PYFREE 19
+
 //#define deDEBUG_FLAGS 1
 
 #define printt(fmt, ...)                                                                         \
@@ -101,18 +113,6 @@ typedef struct {
     u64 mem_allocs;
 } combined_alloc_info_t;
 
-typedef struct {
-    u64 size;
-    u64 stack_id;
-    u64 timestamp_ns;
-} alloc_info_t;
-
-bpf_map_def SEC("maps") stack_traces = {
-  .type        = BPF_MAP_TYPE_STACK_TRACE,
-  .key_size    = sizeof(u32),
-  .value_size  = sizeof(u64) * 16,
-  .max_entries = 16 * 1024,
-};
 
 bpf_map_def SEC("maps") size_record = {
   .type        = BPF_MAP_TYPE_HASH,
@@ -121,17 +121,10 @@ bpf_map_def SEC("maps") size_record = {
   .max_entries = 1000000,
 };
 
-//bpf_map_def SEC("maps") comvined_alloc_infos = {
-//  .type        = BPF_MAP_TYPE_HASH,
-//  .key_size    = sizeof(u64),
-//  .value_size  = sizeof(combined_alloc_info_t),
-//  .max_entries = 1000000,
-//};
-
 bpf_map_def SEC("maps") alloc_infos = {
   .type        = BPF_MAP_TYPE_HASH,
   .key_size    = sizeof(u64),
-  .value_size  = sizeof(alloc_info_t),
+  .value_size  = sizeof(size_t),
   .max_entries = 1000000,
 };
 
@@ -142,124 +135,45 @@ bpf_map_def SEC("maps") memptrs = {
   .max_entries = 1000000,
 };
 
-//bpf_map_def SEC("maps") events = {
-//  .type        = BPF_MAP_TYPE_PERF_EVENT_ARRAY,
-//  .key_size    = sizeof(int),
-//  .value_size  = 0,
-//  .max_entries = 0,
-//};
-
-
-//static inline int update_statistics_add(u64 stack_id, u64 sz) {
-//    combined_alloc_info_t *existing_cinfo;
-//    combined_alloc_info_t cinfo = {0, 0};
-//
-//    existing_cinfo = bpf_map_lookup_elem(&comvined_alloc_infos, &stack_id);
-//    if (!existing_cinfo) {
-//        bpf_map_update_elem(&comvined_alloc_infos, &stack_id, &cinfo, BPF_ANY);
-//        existing_cinfo = bpf_map_lookup_elem(&comvined_alloc_infos, &stack_id);
-//        if (!existing_cinfo)
-//                return 0;
-//    }
-//    __sync_fetch_and_add(&existing_cinfo->total_size, sz);
-//    __sync_fetch_and_add(&existing_cinfo->mem_allocs, 1);
-//    return 0;
-//}
-//
-//static inline void update_statistics_del(u64 stack_id, u64 sz) {
-//    combined_alloc_info_t *existing_cinfo;
-//    existing_cinfo = bpf_map_lookup_elem(&comvined_alloc_infos, &stack_id);
-//    if (!existing_cinfo)
-//        return;
-//
-//    if (existing_cinfo->mem_allocs > 1) {
-//        __sync_fetch_and_sub(&existing_cinfo->total_size, sz);
-//        __sync_fetch_and_sub(&existing_cinfo->mem_allocs, 1);
-//    } else {
-//        bpf_map_delete_elem(&comvined_alloc_infos, &stack_id);
-//    }
-//}
-
-
-static inline int alloc_enter(struct pt_regs *ctx, size_t size, u32 type_index) {
+static inline __attribute__((__always_inline__)) int alloc_enter(struct pt_regs *ctx, size_t size, u32 type_index) {
     u32 tid = bpf_get_current_pid_tgid();
     u64 s = size;
     u64 key = (u64)type_index << 32 | tid;
     bpf_map_update_elem(&size_record, &key, &s, BPF_ANY);
-//    printt("alloc_enter: key: %llu, size: %llu", key, s);
     return 0;
 }
 
-
-
-static inline u64 alloc_exit2(struct pt_regs *ctx, u64 address, u32 type_index) {
+static inline __attribute__((__always_inline__)) u64 alloc_exit2(struct pt_regs *ctx, u64 address, u32 type_index) {
     u64 id  = bpf_get_current_pid_tgid();
     u32 pid = id >> 32;
     u32 tid = id & 0xFFFFFFFF;
     u64 key = (u64)type_index << 32 | tid;
     u64* size64 = bpf_map_lookup_elem(&size_record, &key);
-    printt("alloc_exit2：key: %llu", key);
     if (!size64)
-//        printt("alloc_exit2 return：key: %llu", key);
-        return 0; // missed alloc entry
-
+        return 0;
     bpf_map_delete_elem(&size_record, &key);
-    event e = {};
-    e.size = *size64;
-    e.pid = pid;
-    e.type_t = 1;
     if (address == 0)
         return 0;
     u64 ts = bpf_ktime_get_ns();
-
-    e.timestamp_ns = ts;
-    u32 stack_id = bpf_get_stackid(ctx, &stack_traces, BPF_F_USER_STACK | BPF_F_REUSE_STACKID);
-    if (stack_id < 0)
-        return 0;
-    e.stack_id = stack_id;
-//    update_statistics_add(stack_id, *size64);
-    alloc_info_t ai = {*size64, stack_id, bpf_ktime_get_ns()};
-    bpf_map_update_elem(&alloc_infos, &address, &ai, BPF_ANY);
-//    bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &e, sizeof(e));
-    return *size64;
-//    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, (int)*size64);
-//    return 0;
+    bpf_map_update_elem(&alloc_infos, &address, size64, BPF_ANY);
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, *size64);
 }
 
-static inline int alloc_exit(struct pt_regs *ctx, u32 type_index) {
+static inline __attribute__((__always_inline__)) int alloc_exit(struct pt_regs *ctx, u32 type_index) {
         return alloc_exit2(ctx, PT_REGS_RC(ctx), type_index);
 }
 
-
-static inline u64 free_entry(struct pt_regs *ctx, void *address) {
-//    u64 id  = bpf_get_current_pid_tgid();
-//    u32 pid = id >> 32;
-//    u32 tid = id & 0xFFFFFFFF;
+static inline __attribute__((__always_inline__)) u64 free_entry(struct pt_regs *ctx, void *address) {
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
     u64 addr = (u64)address;
-//    DEBUG_PRINT("free_enter %%llu",addr);
-    alloc_info_t *info = bpf_map_lookup_elem(&alloc_infos, &addr);
-    if (!info)
+    size_t* s = bpf_map_lookup_elem(&alloc_infos, &addr);
+    if (!s)
         return 0;
-//    DEBUG_PRINT("free_enter %p",addr);
     bpf_map_delete_elem(&alloc_infos, &addr);
-//    update_statistics_del(info->stack_id, info->size);
-//    u32 pid = bpf_get_current_pid_tgid() >> 32;
-
-//    event e = {};
-//    e.size = info->size;
-//    e.pid = pid;
-//    e.type_t = 0;
-//    e.stack_id = info->stack_id;
-//    u64 ts = bpf_ktime_get_ns();
-//    u64 id  = bpf_get_current_pid_tgid();
-//    u32 pid = id >> 32;
-//    u32 tid = id & 0xFFFFFFFF;
-//    e.timestamp_ns = ts;
-//    int i_size = 0 - (int)*size64);
-    return info->size;
-//    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, -(int)info->size);
-//    bpf_perf_event_output(ctx, &events, BPF_F_CURRENT_CPU, &e, sizeof(e));
-//    return 0;
+    u64 ts = bpf_ktime_get_ns();
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, *s);
 }
 
 
@@ -271,23 +185,14 @@ int malloc_enter(struct pt_regs *ctx, size_t size) {
 
 SEC("uretprobe/malloc")
 int malloc_exit(struct pt_regs *ctx) {
-    u64 s = alloc_exit2(ctx, PT_REGS_RC(ctx), MALLOC);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
+    return alloc_exit2(ctx, PT_REGS_RC(ctx), MALLOC);
+
 }
 
 SEC("uprobe/free")
 int free_enter(struct pt_regs *ctx) {
     void *address = (void *)PT_REGS_PARM1(ctx);
-    u64 s = free_entry(ctx, address);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, s);
+    return free_entry(ctx, address);
 }
 
 SEC("uprobe/calloc")
@@ -298,35 +203,21 @@ int calloc_enter(struct pt_regs *ctx) {
 }
 SEC("uretprobe/calloc")
 int calloc_exit(struct pt_regs *ctx) {
-    u64 s = alloc_exit(ctx, CALLOC);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
+    return alloc_exit(ctx, CALLOC);
 }
 SEC("uprobe/realloc")
 int realloc_enter(struct pt_regs *ctx) {
     void *ptr = (void *)PT_REGS_PARM1(ctx);
     size_t size = (size_t)PT_REGS_PARM2(ctx);
-    u64 s = free_entry(ctx, ptr);
     alloc_enter(ctx, size, REALLOC);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, s);
+    return free_entry(ctx, ptr);
 }
 
 SEC("uretprobe/realloc")
 int realloc_exit(struct pt_regs *ctx) {
-    u64 s = alloc_exit(ctx, REALLOC);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
+    return alloc_exit(ctx, REALLOC);
 }
+
 SEC("uprobe/mmap")
 int mmap_enter(struct pt_regs *ctx) {
     size_t size = (size_t)PT_REGS_PARM2(ctx);
@@ -334,27 +225,17 @@ int mmap_enter(struct pt_regs *ctx) {
 }
 SEC("uretprobe/mmap")
 int mmap_exit(struct pt_regs *ctx) {
-    u64 s = alloc_exit(ctx, MMAP);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
+    return alloc_exit(ctx, MMAP);
 }
 SEC("uprobe/munmap")
 int munmap_enter(struct pt_regs *ctx) {
     void *address = (void *)PT_REGS_PARM2(ctx);
-    u64 s = free_entry(ctx, address);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, s);
+    return free_entry(ctx, address);
 }
+
 SEC("uprobe/posix_memalign")
 int posix_memalign_enter(struct pt_regs *ctx) {
     void ** memptr = (void **)PT_REGS_PARM1(ctx);
-//    size_t alignment = (size_t)PT_REGS_PARM2(ctx);
     size_t size = (size_t)PT_REGS_PARM3(ctx);
 
     u64 memptr64 = (u64)(size_t)memptr;
@@ -362,10 +243,10 @@ int posix_memalign_enter(struct pt_regs *ctx) {
     bpf_map_update_elem(&memptrs, &tid, &memptr64,BPF_ANY);
     return alloc_enter(ctx, size, POSIX_MEMALIGN);
 }
+
 SEC("uretprobe/posix_memalign")
 int posix_memalign_exit(struct pt_regs *ctx) {
     u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
     u32 tid = id & 0xFFFFFFFF;
     u64 *memptr64 = bpf_map_lookup_elem(&memptrs, &tid);
     void *addr;
@@ -375,66 +256,51 @@ int posix_memalign_exit(struct pt_regs *ctx) {
     if (bpf_probe_read_user(&addr, sizeof(void*), (void*)(size_t)*memptr64))
             return 0;
     u64 addr64 = (u64)(size_t)addr;
-    u64 s = alloc_exit2(ctx, addr64, POSIX_MEMALIGN);
-    u64 ts = bpf_ktime_get_ns();
-
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
+    return alloc_exit2(ctx, addr64, POSIX_MEMALIGN);
 }
+
 SEC("uprobe/aligned_alloc")
 int aligned_alloc_enter(struct pt_regs *ctx) {
     size_t size = (size_t)PT_REGS_PARM2(ctx);
     return alloc_enter(ctx, size, ALIGNED_ALLOC);
 }
+
 SEC("uretprobe/aligned_alloc")
 int aligned_alloc_exit(struct pt_regs *ctx) {
-    u64 s = alloc_exit(ctx, ALIGNED_ALLOC);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
+    return alloc_exit(ctx, ALIGNED_ALLOC);
 }
+
 SEC("uprobe/valloc")
 int valloc_enter(struct pt_regs *ctx) {
     size_t size = (size_t)PT_REGS_PARM1(ctx);
     return alloc_enter(ctx, size, VALLOC);
 }
+
 SEC("uretprobe/valloc")
 int valloc_exit(struct pt_regs *ctx) {
-    u64 s = alloc_exit(ctx, VALLOC);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
+    return alloc_exit(ctx, VALLOC);
 }
+
 SEC("uprobe/memalign")
 int memalign_enter(struct pt_regs *ctx) {
     size_t size = (size_t)PT_REGS_PARM2(ctx);
     return alloc_enter(ctx, size, MEMALIGN);
 }
+
 SEC("uretprobe/memalign")
 int memalign_exit(struct pt_regs *ctx) {
-    u64 s = alloc_exit(ctx, MEMALIGN);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
+    return alloc_exit(ctx, MEMALIGN);
 }
+
 SEC("uprobe/pvalloc")
 int pvalloc_enter(struct pt_regs *ctx) {
     size_t size = (size_t)PT_REGS_PARM1(ctx);
     return alloc_enter(ctx, size, PVALLOC);
 }
+
 SEC("uretprobe/pvalloc")
 int pvalloc_exit(struct pt_regs *ctx) {
-    u64 s = alloc_exit(ctx, PVALLOC);
-    u64 ts = bpf_ktime_get_ns();
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, s);
+    return alloc_exit(ctx, PVALLOC);
 }
 
 
@@ -511,6 +377,129 @@ int pvalloc_exit(struct pt_regs *ctx) {
 //}
 
 
+
+//    - _PyMem_RawMalloc(void *Py_UNUSED(ctx), size_t size)
+SEC("uprobe/pymem_rawmalloc")
+int uprobe_pymem_rawmalloc_enter(struct pt_regs *ctx)
+{
+    u32 tid = bpf_get_current_pid_tgid();
+    u64 key = (u64)PYMALLOC << 32 | tid;
+    u64* size64 = bpf_map_lookup_elem(&size_record, &key);
+    if (size64)
+        return 0;
+    size_t nbytes = PT_REGS_PARM3(ctx);
+    return alloc_enter(ctx, nbytes, PYRAWMALLOC);
+}
+
+//    - _PyMem_RawMalloc(void *Py_UNUSED(ctx), size_t size)
+SEC("uretprobe/pymem_rawmalloc")
+int uprobe_pymalloc_alloc_exit(struct pt_regs *ctx)
+{
+    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYRAWMALLOC);
+}
+
+// _PyMem_RawCalloc(void *Py_UNUSED(ctx), size_t nelem, size_t elsize)
+SEC("uprobe/pymem_rawcalloc")
+int uprobe_pymem_rawcalloc_enter(struct pt_regs *ctx)
+{
+    u32 tid = bpf_get_current_pid_tgid();
+    u64 key = (u64)PYCALLOC << 32 | tid;
+    u64* size64 = bpf_map_lookup_elem(&size_record, &key);
+    if (size64)
+        return 0;
+    size_t nelem = (size_t)PT_REGS_PARM2(ctx);
+    size_t elsize = (size_t)PT_REGS_PARM3(ctx);
+    return alloc_enter(ctx, nelem * elsize, PYRAWCALLOC);
+}
+
+// void * _PyMem_RawCalloc(void *Py_UNUSED(ctx), size_t nelem, size_t elsize)
+SEC("uretprobe/pymem_rawcalloc")
+int uprobe_pymem_rawcalloc_exit(struct pt_regs *ctx)
+{
+    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYRAWCALLOC);
+}
+
+// void * _PyMem_RawRealloc(void *Py_UNUSED(ctx), void *ptr, size_t size)
+SEC("uprobe/pymem_rawrealloc")
+int pymem_rawrealloc_enter(struct pt_regs *ctx) {
+    u32 tid = bpf_get_current_pid_tgid();
+    u64 key = (u64)PYREALLOC << 32 | tid;
+    u64* size64 = bpf_map_lookup_elem(&size_record, &key);
+    if (size64)
+        return 0;
+
+    void *ptr = (void *)PT_REGS_PARM2(ctx);
+    size_t size = (size_t)PT_REGS_PARM3(ctx);
+    alloc_enter(ctx, size, PYRAWREALLOC);
+    return free_entry(ctx, ptr);
+}
+
+// void * _PyMem_RawRealloc(void *Py_UNUSED(ctx), void *ptr, size_t size)
+SEC("uretprobe/pymem_rawrealloc")
+int pymem_rawrealloc_exit(struct pt_regs *ctx) {
+    return alloc_exit(ctx, PYRAWREALLOC);
+}
+
+// void _PyMem_RawFree(void *Py_UNUSED(ctx), void *ptr)
+SEC("uprobe/pymem_rawfree")
+int pymem_rawfree_enter(struct pt_regs *ctx) {
+    void *address = (void *)PT_REGS_PARM2(ctx);
+    return free_entry(ctx, address);
+}
+
+//    _PyObject_Malloc -> [pymalloc_alloc,  PyMem_RawMalloc]
+SEC("uprobe/pyobj_malloc")
+int uprobe_pyobj_malloc_enter(struct pt_regs *ctx)
+{
+    size_t nbytes = PT_REGS_PARM3(ctx);
+    return alloc_enter(ctx, nbytes, PYMALLOC);
+}
+
+SEC("uretprobe/pyobj_malloc")
+int uprobe_pyobj_malloc_exit(struct pt_regs *ctx)
+{
+    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYMALLOC);
+}
+
+//    _PyObject_Calloc -> [pymalloc_alloc, PyMem_RawCalloc]
+SEC("uprobe/pyobj_calloc")
+int uprobe_pyobj_calloc_enter(struct pt_regs *ctx)
+{
+    size_t nelem = (size_t)PT_REGS_PARM2(ctx);
+    size_t elsize = (size_t)PT_REGS_PARM3(ctx);
+    return alloc_enter(ctx, nelem * elsize, PYCALLOC);
+}
+
+// void * _PyMem_RawCalloc(void *Py_UNUSED(ctx), size_t nelem, size_t elsize)
+SEC("uretprobe/pyobj_calloc")
+int uprobe_pyobj_calloc_exit(struct pt_regs *ctx)
+{
+    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYCALLOC);
+}
+
+// void * _PyObject_Realloc -> [ _PyObject_Malloc, pymalloc_realloc, PyMem_RawRealloc]
+SEC("uprobe/pyobj_realloc")
+int uprobe_pyobj_realloc_enter(struct pt_regs *ctx) {
+    void *ptr = (void *)PT_REGS_PARM2(ctx);
+    if (!ptr)
+        return 0;
+    size_t size = (size_t)PT_REGS_PARM3(ctx);
+    alloc_enter(ctx, size, PYREALLOC);
+    return free_entry(ctx, ptr);
+}
+
+// void * _PyMem_RawRealloc(void *Py_UNUSED(ctx), void *ptr, size_t size)
+SEC("uretprobe/pyobj_realloc")
+int uprobe_pyobj_realloc_exit(struct pt_regs *ctx) {
+    return alloc_exit(ctx, PYREALLOC);
+}
+
+//    _PyObject_Free -> [pymalloc_free, PyMem_RawFree]
+SEC("uprobe/pyobj_free")
+int uprobe_pyobj_free_enter(struct pt_regs *ctx) {
+    void *address = (void *)PT_REGS_PARM2(ctx);
+    return free_entry(ctx, address);
+}
 
 
 
