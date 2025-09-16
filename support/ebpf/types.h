@@ -553,7 +553,7 @@ typedef struct Trace {
   u64 offtime;
 
   // bytes allocated
-  int mem_alloc;
+  u64 mem_alloc;
 
   u64 addr;
 
