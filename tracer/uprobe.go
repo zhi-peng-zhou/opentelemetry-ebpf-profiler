@@ -84,7 +84,7 @@ func (t *Tracer) AttachUProbes(execute string, symbol string, canFail bool, need
 			err = fmt.Errorf("prog %s not found", retProg)
 		}
 		var uRetProbeLink link.Link
-		uRetProbeLink, err = exec.Uprobe(symbol, uRetProbeProg, nil)
+		uRetProbeLink, err = exec.Uretprobe(symbol, uRetProbeProg, nil)
 		if err != nil {
 			if canFail {
 				err = nil
@@ -120,7 +120,7 @@ func (t *Tracer) StartPythonMemProfiling(execute string) error {
 	t.AttachUProbes(execute, "PyObject_Realloc", false, true)
 	t.AttachUProbes(execute, "PyObject_Free", false, false)
 
-	t.AttachUProbes(execute, "PyMem_Realloc", false, true)
+	t.AttachUProbes(execute, "PyMem_Malloc", false, true)
 	t.AttachUProbes(execute, "PyMem_Calloc", false, true)
 	t.AttachUProbes(execute, "PyMem_Realloc", false, true)
 	t.AttachUProbes(execute, "PyMem_Free", false, false)

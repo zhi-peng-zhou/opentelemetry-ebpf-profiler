@@ -408,11 +408,6 @@ int PyMem_RawMalloc_exit(struct pt_regs *ctx)
 SEC("uprobe/pymem_rawcalloc")
 int PyMem_RawCalloc_enter(struct pt_regs *ctx)
 {
-//    u32 tid = bpf_get_current_pid_tgid();
-//    u64 key = (u64)PYCALLOC << 32 | tid;
-//    u64* size64 = bpf_map_lookup_elem(&size_record, &key);
-//    if (size64)
-//        return 0;
     size_t nelem = (size_t)PT_REGS_PARM1(ctx);
     size_t elsize = (size_t)PT_REGS_PARM2(ctx);
     return alloc_enter(ctx, nelem * elsize, PYRAWCALLOC);
@@ -428,12 +423,6 @@ int PyMem_RawCalloc_exit(struct pt_regs *ctx)
 // void* PyMem_RawRealloc(void *ptr, size_t new_size)
 SEC("uprobe/pymem_rawrealloc")
 int PyMem_RawRealloc_enter(struct pt_regs *ctx) {
-//    u32 tid = bpf_get_current_pid_tgid();
-//    u64 key = (u64)PYREALLOC << 32 | tid;
-//    u64* size64 = bpf_map_lookup_elem(&size_record, &key);
-//    if (size64)
-//        return 0;
-
     void *ptr = (void *)PT_REGS_PARM1(ctx);
     size_t size = (size_t)PT_REGS_PARM2(ctx);
     alloc_enter(ctx, size, PYRAWREALLOC);
@@ -459,6 +448,7 @@ SEC("uprobe/pyobj_malloc")
 int PyObject_Malloc_enter(struct pt_regs *ctx)
 {
     size_t nbytes = PT_REGS_PARM1(ctx);
+    printt("pyobj_malloc nbytes: %lu", nbytes);
     return alloc_enter(ctx, nbytes, PYMALLOC);
 }
 
@@ -466,6 +456,7 @@ int PyObject_Malloc_enter(struct pt_regs *ctx)
 SEC("uretprobe/pyobj_malloc")
 int PyObject_Malloc_exit(struct pt_regs *ctx)
 {
+    printt("pyobj_malloc exit: %d", 1);
     return alloc_exit2(ctx, PT_REGS_RC(ctx), PYMALLOC);
 }
 
@@ -475,6 +466,7 @@ int PyObject_Calloc_enter(struct pt_regs *ctx)
 {
     size_t nelem = (size_t)PT_REGS_PARM1(ctx);
     size_t elsize = (size_t)PT_REGS_PARM2(ctx);
+    printt("pyobj_calloc elsize： %lu, nelem: %lu", elsize, nelem);
     return alloc_enter(ctx, nelem * elsize, PYCALLOC);
 }
 
@@ -482,6 +474,7 @@ int PyObject_Calloc_enter(struct pt_regs *ctx)
 SEC("uretprobe/pyobj_calloc")
 int PyObject_Calloc_exit(struct pt_regs *ctx)
 {
+    printt("pyobj_calloc exit %d", 1);
     return alloc_exit2(ctx, PT_REGS_RC(ctx), PYCALLOC);
 }
 
@@ -492,6 +485,7 @@ int PyObject_Realloc_enter(struct pt_regs *ctx) {
     if (!ptr)
         return 0;
     size_t size = (size_t)PT_REGS_PARM2(ctx);
+    printt("pyobj_realloc size： %lu", size);
     alloc_enter(ctx, size, PYREALLOC);
     return free_entry(ctx, ptr);
 }
@@ -499,12 +493,14 @@ int PyObject_Realloc_enter(struct pt_regs *ctx) {
 // void * PyObject_Realloc(void *ptr, size_t new_size)
 SEC("uretprobe/pyobj_realloc")
 int PyObject_Realloc_exit(struct pt_regs *ctx) {
+    printt("pyobj_realloc exit： %d", 1);
     return alloc_exit(ctx, PYREALLOC);
 }
 
 // void PyObject_Free(void *ptr)
 SEC("uprobe/pyobj_free")
 int PyObject_Free_enter(struct pt_regs *ctx) {
+    printt("pyobj_free ： %d",1);
     void *address = (void *)PT_REGS_PARM1(ctx);
     return free_entry(ctx, address);
 }
