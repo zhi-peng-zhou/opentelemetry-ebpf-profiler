@@ -146,6 +146,7 @@ static inline __attribute__((__always_inline__)) int alloc_enter(struct pt_regs 
     u64 s = size;
     u64 key = (u64)type_index << 32 | tid;
     bpf_map_update_elem(&size_record, &key, &s, BPF_ANY);
+    printt("alloc_enter size: %lu, type: %d",size, type_index);
     return 0;
 }
 
@@ -162,6 +163,7 @@ static inline __attribute__((__always_inline__)) u64 alloc_exit2(struct pt_regs 
         return 0;
     u64 ts = bpf_ktime_get_ns();
     bpf_map_update_elem(&alloc_infos, &address, size64, BPF_ANY);
+    printt("alloc_exit2 address: %llu, type: %u",address, type_index);
     return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, *size64);
 }
 
@@ -179,6 +181,7 @@ static inline __attribute__((__always_inline__)) u64 free_entry(struct pt_regs *
         return 0;
     bpf_map_delete_elem(&alloc_infos, &addr);
     u64 ts = bpf_ktime_get_ns();
+    printt("free_entry address: %llu, size: %lu",addr, *s);
     return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, *s);
 }
 
@@ -512,6 +515,7 @@ SEC("uprobe/pymem_malloc")
 int PyMem_Malloc_enter(struct pt_regs *ctx)
 {
     size_t nbytes = PT_REGS_PARM1(ctx);
+    printt("pymem_malloc size： %lu", nbytes);
     return alloc_enter(ctx, nbytes, PYMEMMALLOC);
 }
 
@@ -519,6 +523,7 @@ int PyMem_Malloc_enter(struct pt_regs *ctx)
 SEC("uretprobe/pymem_malloc")
 int PyMem_Malloc_exit(struct pt_regs *ctx)
 {
+    printt("pymem_malloc exit： %d", 1);
     return alloc_exit2(ctx, PT_REGS_RC(ctx), PYMEMMALLOC);
 }
 
@@ -528,6 +533,7 @@ int PyMem_Calloc_enter(struct pt_regs *ctx)
 {
     size_t nelem = (size_t)PT_REGS_PARM1(ctx);
     size_t elsize = (size_t)PT_REGS_PARM2(ctx);
+    printt("pymem_calloc nelem: %lu, elsize： %lu",nelem, elsize);
     return alloc_enter(ctx, nelem * elsize, PYMEMCALLOC);
 }
 
@@ -535,6 +541,7 @@ int PyMem_Calloc_enter(struct pt_regs *ctx)
 SEC("uretprobe/pymem_calloc")
 int PyMem_Calloc_exit(struct pt_regs *ctx)
 {
+    printt("pymem_calloc exit： %d", 1);
     return alloc_exit2(ctx, PT_REGS_RC(ctx), PYMEMCALLOC);
 }
 
@@ -545,6 +552,7 @@ int PyMem_Realloc_enter(struct pt_regs *ctx) {
     if (!ptr)
         return 0;
     size_t size = (size_t)PT_REGS_PARM2(ctx);
+    printt("pymem_realloc exit： %d", 1);
     alloc_enter(ctx, size, PYMEMREALLOC);
     return free_entry(ctx, ptr);
 }
