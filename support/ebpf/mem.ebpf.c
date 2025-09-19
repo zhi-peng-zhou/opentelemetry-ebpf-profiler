@@ -544,12 +544,10 @@ int PyMem_Calloc_exit(struct pt_regs *ctx)
 // void * PyMem_Realloc(void *ptr, size_t new_size)
 SEC("uprobe/pymem_realloc")
 int PyMem_Realloc_enter(struct pt_regs *ctx) {
-    void *ptr = (void *)PT_REGS_PARM1(ctx);
-    if (!ptr)
-        return 0;
     size_t size = (size_t)PT_REGS_PARM2(ctx);
     printt("pymem_realloc exit： %d", 1);
     alloc_enter(ctx, size, PYMEMREALLOC);
+    void *ptr = (void *)PT_REGS_PARM1(ctx);
     return free_entry(ctx, ptr);
 }
 
