@@ -152,7 +152,6 @@ static inline __attribute__((__always_inline__)) int alloc_enter(struct pt_regs 
 
 static inline __attribute__((__always_inline__)) u64 alloc_exit2(struct pt_regs *ctx, u64 address, u32 type_index) {
     u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
     u32 tid = id & 0xFFFFFFFF;
     u64 key = (u64)type_index << 32 | tid;
     u64* size64 = bpf_map_lookup_elem(&size_record, &key);
@@ -161,6 +160,7 @@ static inline __attribute__((__always_inline__)) u64 alloc_exit2(struct pt_regs 
     bpf_map_delete_elem(&size_record, &key);
     if (address == 0)
         return 0;
+    u32 pid = id >> 32;
     u64 ts = bpf_ktime_get_ns();
     bpf_map_update_elem(&alloc_infos, &address, size64, BPF_ANY);
     printt("alloc_exit2 address: %llu, type: %u",address, type_index);
@@ -172,13 +172,13 @@ static inline __attribute__((__always_inline__)) int alloc_exit(struct pt_regs *
 }
 
 static inline __attribute__((__always_inline__)) u64 free_entry(struct pt_regs *ctx, void *address) {
-    u64 id  = bpf_get_current_pid_tgid();
-    u32 pid = id >> 32;
-    u32 tid = id & 0xFFFFFFFF;
     u64 addr = (u64)address;
     size_t* s = bpf_map_lookup_elem(&alloc_infos, &addr);
     if (!s)
         return 0;
+    u64 id  = bpf_get_current_pid_tgid();
+    u32 pid = id >> 32;
+    u32 tid = id & 0xFFFFFFFF;
     bpf_map_delete_elem(&alloc_infos, &addr);
     u64 ts = bpf_ktime_get_ns();
     printt("free_entry address: %llu, size: %lu",addr, *s);
@@ -391,11 +391,6 @@ int pvalloc_exit(struct pt_regs *ctx) {
 SEC("uprobe/pymem_rawmalloc")
 int PyMem_RawMalloc_enter(struct pt_regs *ctx)
 {
-//    u32 tid = bpf_get_current_pid_tgid();
-//    u64 key = (u64)PYMALLOC << 32 | tid;
-//    u64* size64 = bpf_map_lookup_elem(&size_record, &key);
-//    if (size64)
-//        return 0;
     size_t nbytes = PT_REGS_PARM1(ctx);
     return alloc_enter(ctx, nbytes, PYRAWMALLOC);
 }
@@ -482,15 +477,16 @@ int PyObject_Calloc_exit(struct pt_regs *ctx)
 }
 
 // void * PyObject_Realloc(void *ptr, size_t new_size)
+// ptr here maybe 0, then cpython will use _PyObject_Malloc
 SEC("uprobe/pyobj_realloc")
 int PyObject_Realloc_enter(struct pt_regs *ctx) {
-    void *ptr = (void *)PT_REGS_PARM1(ctx);
-    if (!ptr)
-        return 0;
     size_t size = (size_t)PT_REGS_PARM2(ctx);
     printt("pyobj_realloc size： %lu", size);
     alloc_enter(ctx, size, PYREALLOC);
+    void *ptr = (void *)PT_REGS_PARM1(ctx);
     return free_entry(ctx, ptr);
+//    if (!ptr)
+//        return 0;
 }
 
 // void * PyObject_Realloc(void *ptr, size_t new_size)
@@ -569,3 +565,6 @@ int PyMem_Free_enter(struct pt_regs *ctx) {
     void *address = (void *)PT_REGS_PARM1(ctx);
     return free_entry(ctx, address);
 }
+
+
+/** rust **/
