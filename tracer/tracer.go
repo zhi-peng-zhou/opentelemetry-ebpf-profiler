@@ -1110,6 +1110,9 @@ func (t *Tracer) loadBpfTrace(raw []byte, cpu int) *host.Trace {
 			ReturnAddress: rawFrame.return_address != 0,
 		}
 	}
+	if trace.Origin == support.TraceOriginHeap {
+		log.Infof("trace: %v", trace)
+	}
 	return trace
 }
 
