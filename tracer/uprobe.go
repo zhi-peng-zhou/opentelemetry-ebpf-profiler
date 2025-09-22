@@ -97,6 +97,61 @@ func (t *Tracer) AttachUProbes(execute string, symbol string, canFail bool, need
 	return
 }
 
+func (t *Tracer) AttachUProbesWithProgePrefix(execute string, symbol string, prog_prefix string, canFail bool, needUret bool) {
+	prog := symbol + "_enter"
+	if prog_prefix != "" {
+		prog = prog_prefix + "_enter"
+	}
+	uProbeProg, ok := t.ebpfProgs[prog]
+	var err error
+	defer func() {
+		if err != nil {
+			log.Errorf("failed to attach u-probe program %s: %v", prog, err)
+		}
+	}()
+
+	if !ok {
+		err = fmt.Errorf("prog %s not found", prog)
+		return
+	}
+
+	exec, err := link.OpenExecutable(execute)
+	if err != nil {
+		return
+	}
+	uprobeLink, err := exec.Uprobe(symbol, uProbeProg, nil)
+	if err != nil {
+		if canFail {
+			err = nil
+			return
+		}
+		return
+	}
+	t.hooks[hookPoint{group: "uprobe", name: execute + ":" + symbol + ":" + prog}] = uprobeLink
+
+	if needUret {
+		retProg := symbol + "_exit"
+		if prog_prefix != "" {
+			prog = prog_prefix + "_exit"
+		}
+		uRetProbeProg, ok := t.ebpfProgs[retProg]
+		if !ok {
+			err = fmt.Errorf("prog %s not found", retProg)
+		}
+		var uRetProbeLink link.Link
+		uRetProbeLink, err = exec.Uretprobe(symbol, uRetProbeProg, nil)
+		if err != nil {
+			if canFail {
+				err = nil
+				return
+			}
+			return
+		}
+		t.hooks[hookPoint{group: "uprobe", name: execute + ":" + symbol + ":" + retProg}] = uRetProbeLink
+	}
+	return
+}
+
 // StartCMemProfiling starts off-cpu profiling by attaching the programs to the hooks.
 func (t *Tracer) StartCMemProfiling(execute string) error {
 	t.AttachUProbes(execute, "malloc", false, true)
@@ -125,10 +180,15 @@ func (t *Tracer) StartPythonMemProfiling(execute string) error {
 	t.AttachUProbes(execute, "PyMem_Realloc", false, true)
 	t.AttachUProbes(execute, "PyMem_Free", false, false)
 
-	t.AttachUProbes(execute, "PyMem_RawMalloc", false, true)
-	t.AttachUProbes(execute, "PyMem_RawCalloc", false, true)
-	t.AttachUProbes(execute, "PyMem_RawRealloc", false, true)
-	t.AttachUProbes(execute, "PyMem_RawFree", false, false)
+	//t.AttachUProbes(execute, "PyMem_RawMalloc", false, true)
+	//t.AttachUProbes(execute, "PyMem_RawCalloc", false, true)
+	//t.AttachUProbes(execute, "PyMem_RawRealloc", false, true)
+	//t.AttachUProbes(execute, "PyMem_RawFree", false, false)
+	libc := ""
+	t.AttachUProbesWithProgePrefix(libc, "malloc", "Py_Malloc", false, true)
+	t.AttachUProbesWithProgePrefix(libc, "calloc", "Py_Calloc", false, true)
+	t.AttachUProbesWithProgePrefix(libc, "realloc", "Py_Realloc", false, true)
+	t.AttachUProbesWithProgePrefix(libc, "free", "Py_Free", false, false)
 
 	return nil
 }

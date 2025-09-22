@@ -5,6 +5,7 @@
 #include "types.h"
 #include "tsd.h"
 
+// c: 1000-0000-0000-0000       0000-0000-0000-0000
 #define KERNEL 0
 #define MALLOC 1
 #define CALLOC 2
@@ -18,21 +19,19 @@
 #define FREE 10
 #define MUNMAP 11
 
-
+// py-raw 0100-0000-0000-0000       0000-0000-0000-0000
 #define PYRAWMALLOC 12
 #define PYRAWCALLOC 13
 #define PYRAWREALLOC 14
-#define PYRAWFREE 15
 
+// py-alloc 0010-0000-0000-0000       0000-0000-0000-0000
 #define PYMALLOC 16
 #define PYCALLOC 17
 #define PYREALLOC 18
-#define PYFREE 19
 
-#define PYMEMMALLOC 20
-#define PYMEMCALLOC 21
-#define PYMEMREALLOC 22
-#define PYMEMFREE 23
+//#define PYMEMMALLOC 20
+//#define PYMEMCALLOC 21
+//#define PYMEMREALLOC 22
 
 
 //#define deDEBUG_FLAGS 1
@@ -142,6 +141,21 @@ bpf_map_def SEC("maps") memptrs = {
 };
 
 static inline __attribute__((__always_inline__)) int alloc_enter(struct pt_regs *ctx, size_t size, u32 type_index) {
+//    if (type_index == PYMALLOC || type_index == PYCALLOC || type_index == PYREALLOC) {
+//        u32 tid = bpf_get_current_pid_tgid();
+//        u64 key_py_malloc = (u64)PYMALLOC << 32 | tid;
+//        u64* size64 = bpf_map_lookup_elem(&size_record, &key_py_malloc);
+//        if (size64)
+//            return 0;
+//        u64 key_py_calloc = (u64)PYCALLOC << 32 | tid;
+//        size64 = bpf_map_lookup_elem(&size_record, &key_py_calloc);
+//        if (size64)
+//            return 0;
+//        u64 key_py_realloc = (u64)PYREALLOC << 32 | tid;
+//        size64 = bpf_map_lookup_elem(&size_record, &key_py_realloc);
+//        if (size64)
+//            return 0;
+//    }
     u32 tid = bpf_get_current_pid_tgid();
     u64 s = size;
     u64 key = (u64)type_index << 32 | tid;
@@ -187,7 +201,7 @@ static inline __attribute__((__always_inline__)) u64 free_entry(struct pt_regs *
 
 
 SEC("uprobe/malloc")
-int malloc_enter(struct pt_regs *ctx, size_t size) {
+int malloc_enter(struct pt_regs *ctx) {
     size_t actual_size = (size_t)PT_REGS_PARM1(ctx);
     return alloc_enter(ctx, actual_size, MALLOC);
 }
@@ -385,60 +399,60 @@ int pvalloc_exit(struct pt_regs *ctx) {
 //  return collect_trace(ctx, TRACE_UPROBE, pid, tid, ts, 0);
 //}
 
-
-/** pymem_raw **/
-// void * PyMem_RawMalloc(size_t size)
-SEC("uprobe/pymem_rawmalloc")
-int PyMem_RawMalloc_enter(struct pt_regs *ctx)
-{
-    size_t nbytes = PT_REGS_PARM1(ctx);
-    return alloc_enter(ctx, nbytes, PYRAWMALLOC);
-}
-
-// // void * PyMem_RawMalloc(size_t size)
-SEC("uretprobe/pymem_rawmalloc")
-int PyMem_RawMalloc_exit(struct pt_regs *ctx)
-{
-    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYRAWMALLOC);
-}
-
-// void * PyMem_RawCalloc(size_t nelem, size_t elsize)
-SEC("uprobe/pymem_rawcalloc")
-int PyMem_RawCalloc_enter(struct pt_regs *ctx)
-{
-    size_t nelem = (size_t)PT_REGS_PARM1(ctx);
-    size_t elsize = (size_t)PT_REGS_PARM2(ctx);
-    return alloc_enter(ctx, nelem * elsize, PYRAWCALLOC);
-}
-
-// void * PyMem_RawCalloc(size_t nelem, size_t elsize)
-SEC("uretprobe/pymem_rawcalloc")
-int PyMem_RawCalloc_exit(struct pt_regs *ctx)
-{
-    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYRAWCALLOC);
-}
-
-// void* PyMem_RawRealloc(void *ptr, size_t new_size)
-SEC("uprobe/pymem_rawrealloc")
-int PyMem_RawRealloc_enter(struct pt_regs *ctx) {
-    void *ptr = (void *)PT_REGS_PARM1(ctx);
-    size_t size = (size_t)PT_REGS_PARM2(ctx);
-    alloc_enter(ctx, size, PYRAWREALLOC);
-    return free_entry(ctx, ptr);
-}
-
-// void* PyMem_RawRealloc(void *ptr, size_t new_size)
-SEC("uretprobe/pymem_rawrealloc")
-int PyMem_RawRealloc_exit(struct pt_regs *ctx) {
-    return alloc_exit(ctx, PYRAWREALLOC);
-}
-
-// void PyMem_RawFree(void *ptr)
-SEC("uprobe/pymem_rawfree")
-int PyMem_RawFree_enter(struct pt_regs *ctx) {
-    void *address = (void *)PT_REGS_PARM1(ctx);
-    return free_entry(ctx, address);
-}
+//
+///** pymem_raw **/
+//// void * PyMem_RawMalloc(size_t size)
+//SEC("uprobe/pymem_rawmalloc")
+//int PyMem_RawMalloc_enter(struct pt_regs *ctx)
+//{
+//    size_t nbytes = PT_REGS_PARM1(ctx);
+//    return alloc_enter(ctx, nbytes, PYRAWMALLOC);
+//}
+//
+//// // void * PyMem_RawMalloc(size_t size)
+//SEC("uretprobe/pymem_rawmalloc")
+//int PyMem_RawMalloc_exit(struct pt_regs *ctx)
+//{
+//    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYRAWMALLOC);
+//}
+//
+//// void * PyMem_RawCalloc(size_t nelem, size_t elsize)
+//SEC("uprobe/pymem_rawcalloc")
+//int PyMem_RawCalloc_enter(struct pt_regs *ctx)
+//{
+//    size_t nelem = (size_t)PT_REGS_PARM1(ctx);
+//    size_t elsize = (size_t)PT_REGS_PARM2(ctx);
+//    return alloc_enter(ctx, nelem * elsize, PYRAWCALLOC);
+//}
+//
+//// void * PyMem_RawCalloc(size_t nelem, size_t elsize)
+//SEC("uretprobe/pymem_rawcalloc")
+//int PyMem_RawCalloc_exit(struct pt_regs *ctx)
+//{
+//    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYRAWCALLOC);
+//}
+//
+//// void* PyMem_RawRealloc(void *ptr, size_t new_size)
+//SEC("uprobe/pymem_rawrealloc")
+//int PyMem_RawRealloc_enter(struct pt_regs *ctx) {
+//    void *ptr = (void *)PT_REGS_PARM1(ctx);
+//    size_t size = (size_t)PT_REGS_PARM2(ctx);
+//    alloc_enter(ctx, size, PYRAWREALLOC);
+//    return free_entry(ctx, ptr);
+//}
+//
+//// void* PyMem_RawRealloc(void *ptr, size_t new_size)
+//SEC("uretprobe/pymem_rawrealloc")
+//int PyMem_RawRealloc_exit(struct pt_regs *ctx) {
+//    return alloc_exit(ctx, PYRAWREALLOC);
+//}
+//
+//// void PyMem_RawFree(void *ptr)
+//SEC("uprobe/pymem_rawfree")
+//int PyMem_RawFree_enter(struct pt_regs *ctx) {
+//    void *address = (void *)PT_REGS_PARM1(ctx);
+//    return free_entry(ctx, address);
+//}
 
 /** pyobj **/
 // void * PyObject_Malloc(size_t size)
@@ -512,7 +526,7 @@ int PyMem_Malloc_enter(struct pt_regs *ctx)
 {
     size_t nbytes = PT_REGS_PARM1(ctx);
     printt("pymem_malloc size： %lu", nbytes);
-    return alloc_enter(ctx, nbytes, PYMEMMALLOC);
+    return alloc_enter(ctx, nbytes, PYMALLOC);
 }
 
 // void * PyMem_Malloc(size_t size)
@@ -520,7 +534,7 @@ SEC("uretprobe/pymem_malloc")
 int PyMem_Malloc_exit(struct pt_regs *ctx)
 {
     printt("pymem_malloc exit： %d", 1);
-    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYMEMMALLOC);
+    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYMALLOC);
 }
 
 // void * PyMem_Calloc(size_t nelem, size_t elsize)
@@ -530,7 +544,7 @@ int PyMem_Calloc_enter(struct pt_regs *ctx)
     size_t nelem = (size_t)PT_REGS_PARM1(ctx);
     size_t elsize = (size_t)PT_REGS_PARM2(ctx);
     printt("pymem_calloc nelem: %lu, elsize： %lu",nelem, elsize);
-    return alloc_enter(ctx, nelem * elsize, PYMEMCALLOC);
+    return alloc_enter(ctx, nelem * elsize, PYCALLOC);
 }
 
 // void * PyMem_Calloc(size_t nelem, size_t elsize)
@@ -538,7 +552,7 @@ SEC("uretprobe/pymem_calloc")
 int PyMem_Calloc_exit(struct pt_regs *ctx)
 {
     printt("pymem_calloc exit： %d", 1);
-    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYMEMCALLOC);
+    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYCALLOC);
 }
 
 // void * PyMem_Realloc(void *ptr, size_t new_size)
@@ -546,7 +560,7 @@ SEC("uprobe/pymem_realloc")
 int PyMem_Realloc_enter(struct pt_regs *ctx) {
     size_t size = (size_t)PT_REGS_PARM2(ctx);
     printt("pymem_realloc exit： %d", 1);
-    alloc_enter(ctx, size, PYMEMREALLOC);
+    alloc_enter(ctx, size, PYREALLOC);
     void *ptr = (void *)PT_REGS_PARM1(ctx);
     return free_entry(ctx, ptr);
 }
@@ -554,12 +568,107 @@ int PyMem_Realloc_enter(struct pt_regs *ctx) {
 // void * PyMem_Realloc(void *ptr, size_t new_size)
 SEC("uretprobe/pymem_realloc")
 int PyMem_Realloc_exit(struct pt_regs *ctx) {
-    return alloc_exit(ctx, PYMEMREALLOC);
+    return alloc_exit(ctx, PYREALLOC);
 }
 
 // void PyMem_Free(void *ptr)
 SEC("uprobe/pymem_free")
 int PyMem_Free_enter(struct pt_regs *ctx) {
+    void *address = (void *)PT_REGS_PARM1(ctx);
+    return free_entry(ctx, address);
+}
+
+
+
+/** pymem_raw **/
+// void * PyMem_RawMalloc(size_t size)
+SEC("uprobe/py_malloc")
+int Py_Malloc_enter(struct pt_regs *ctx)
+{
+    u32 tid = bpf_get_current_pid_tgid();
+    u64 key_py_malloc = (u64)PYMALLOC << 32 | tid;
+    u64* size64 = bpf_map_lookup_elem(&size_record, &key_py_malloc);
+    if (size64)
+        return 0;
+    u64 key_py_calloc = (u64)PYCALLOC << 32 | tid;
+    size64 = bpf_map_lookup_elem(&size_record, &key_py_calloc);
+    if (size64)
+        return 0;
+    u64 key_py_realloc = (u64)PYREALLOC << 32 | tid;
+    size64 = bpf_map_lookup_elem(&size_record, &key_py_realloc);
+    if (size64)
+        return 0;
+    size_t nbytes = (size_t)PT_REGS_PARM1(ctx);
+    return alloc_enter(ctx, nbytes, PYRAWMALLOC);
+}
+
+// // void * PyMem_RawMalloc(size_t size)
+SEC("uretprobe/py_malloc")
+int Py_Malloc_exit(struct pt_regs *ctx)
+{
+    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYRAWMALLOC);
+}
+
+// void * PyMem_RawCalloc(size_t nelem, size_t elsize)
+SEC("uprobe/py_calloc")
+int Py_Calloc_enter(struct pt_regs *ctx)
+{
+    u32 tid = bpf_get_current_pid_tgid();
+    u64 key_py_malloc = (u64)PYMALLOC << 32 | tid;
+    u64* size64 = bpf_map_lookup_elem(&size_record, &key_py_malloc);
+    if (size64)
+        return 0;
+    u64 key_py_calloc = (u64)PYCALLOC << 32 | tid;
+    size64 = bpf_map_lookup_elem(&size_record, &key_py_calloc);
+    if (size64)
+        return 0;
+    u64 key_py_realloc = (u64)PYREALLOC << 32 | tid;
+    size64 = bpf_map_lookup_elem(&size_record, &key_py_realloc);
+    if (size64)
+        return 0;
+    size_t nelem = (size_t)PT_REGS_PARM1(ctx);
+    size_t elsize = (size_t)PT_REGS_PARM2(ctx);
+    return alloc_enter(ctx, nelem * elsize, PYRAWCALLOC);
+}
+
+// void * PyMem_RawCalloc(size_t nelem, size_t elsize)
+SEC("uretprobe/py_calloc")
+int Py_Calloc_exit(struct pt_regs *ctx)
+{
+    return alloc_exit2(ctx, PT_REGS_RC(ctx), PYRAWCALLOC);
+}
+
+// void* PyMem_RawRealloc(void *ptr, size_t new_size)
+SEC("uprobe/py_realloc")
+int Py_Realloc_enter(struct pt_regs *ctx) {
+    u32 tid = bpf_get_current_pid_tgid();
+    u64 key_py_malloc = (u64)PYMALLOC << 32 | tid;
+    u64* size64 = bpf_map_lookup_elem(&size_record, &key_py_malloc);
+    if (size64)
+        return 0;
+    u64 key_py_calloc = (u64)PYCALLOC << 32 | tid;
+    size64 = bpf_map_lookup_elem(&size_record, &key_py_calloc);
+    if (size64)
+        return 0;
+    u64 key_py_realloc = (u64)PYREALLOC << 32 | tid;
+    size64 = bpf_map_lookup_elem(&size_record, &key_py_realloc);
+    if (size64)
+        return 0;
+    void *ptr = (void *)PT_REGS_PARM1(ctx);
+    size_t size = (size_t)PT_REGS_PARM2(ctx);
+    alloc_enter(ctx, size, PYRAWREALLOC);
+    return free_entry(ctx, ptr);
+}
+
+// void* PyMem_RawRealloc(void *ptr, size_t new_size)
+SEC("uretprobe/py_realloc")
+int Py_Realloc_exit(struct pt_regs *ctx) {
+    return alloc_exit(ctx, PYRAWREALLOC);
+}
+
+// void PyMem_RawFree(void *ptr)
+SEC("uprobe/py_free")
+int Py_Free_enter(struct pt_regs *ctx) {
     void *address = (void *)PT_REGS_PARM1(ctx);
     return free_entry(ctx, address);
 }
