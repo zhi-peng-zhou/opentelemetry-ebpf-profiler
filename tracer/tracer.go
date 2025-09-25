@@ -156,6 +156,8 @@ type Config struct {
 	ProbabilisticThreshold uint
 	// OffCPUThreshold is the user defined threshold for off-cpu profiling.
 	OffCPUThreshold uint32
+	// MemProfile switch memprofile
+	MemProfile bool
 	// TargetPIDs is a list of PIDs to target for profiling.
 	TargetPIDs []libpf.PID
 }
@@ -497,6 +499,68 @@ func initializeMapsAndPrograms(kernelSymbols *libpf.SymbolMap, cfg *Config) (
 
 	if cfg.OffCPUThreshold > 0 {
 		if err = loadKProbeUnwinders(coll, ebpfProgs, ebpfMaps["kprobe_progs"], tailCallProgs,
+			cfg.BPFVerifierLogLevel, ebpfMaps["perf_progs"].FD()); err != nil {
+			return nil, nil, fmt.Errorf("failed to load kprobe eBPF programs: %v", err)
+		}
+	}
+
+	if cfg.MemProfile {
+		var progs []progLoaderHelper
+		cprogss := []string{"malloc_enter", "malloc_exit", "free_enter",
+			"calloc_enter", "calloc_exit", "realloc_enter", "realloc_exit", "mmap_enter", "mmap_exit", "munmap_enter",
+			"posix_memalign_enter", "posix_memalign_exit", "aligned_alloc_enter", "aligned_alloc_exit", "valloc_enter", "valloc_exit",
+			"memalign_enter", "memalign_exit", "pvalloc_enter", "pvalloc_exit"}
+
+		py_progss := []string{
+			"PyObject_Malloc_enter",
+			"PyObject_Malloc_exit",
+			"PyObject_Calloc_enter",
+			"PyObject_Calloc_exit",
+			"PyObject_Realloc_enter",
+			"PyObject_Realloc_exit",
+			"PyObject_Free_enter",
+
+			//"PyMem_RawMalloc_enter",
+			//"PyMem_RawMalloc_exit",
+			//"PyMem_RawCalloc_enter",
+			//"PyMem_RawCalloc_exit",
+			//"PyMem_RawRealloc_enter",
+			//"PyMem_RawRealloc_exit",
+			//"PyMem_RawFree_enter",
+			"Py_Malloc_enter",
+			"Py_Malloc_exit",
+			"Py_Calloc_enter",
+			"Py_Calloc_exit",
+			"Py_Realloc_enter",
+			"Py_Realloc_exit",
+			"Py_Free_enter",
+
+			"PyMem_Malloc_enter",
+			"PyMem_Malloc_exit",
+			"PyMem_Calloc_enter",
+			"PyMem_Calloc_exit",
+			"PyMem_Realloc_enter",
+			"PyMem_Realloc_exit",
+			"PyMem_Free_enter",
+		}
+
+		//var uProgs []progLoaderHelper
+		uProgs := make([]progLoaderHelper, len(cprogss))
+		for _, p := range cprogss {
+			uProgs = append(uProgs, progLoaderHelper{name: p, noTailCallTarget: true, enable: true})
+		}
+		for _, p := range py_progss {
+			uProgs = append(uProgs, progLoaderHelper{name: p, noTailCallTarget: true, enable: true})
+		}
+
+		if cfg.OffCPUThreshold > 0 {
+			progs = uProgs
+		} else {
+			progs = make([]progLoaderHelper, len(tailCallProgs)+len(uProgs))
+			progs = append(progs, tailCallProgs...)
+			progs = append(progs, uProgs...)
+		}
+		if err = loadUProbeUnwinders(coll, ebpfProgs, ebpfMaps["kprobe_progs"], progs,
 			cfg.BPFVerifierLogLevel, ebpfMaps["perf_progs"].FD()); err != nil {
 			return nil, nil, fmt.Errorf("failed to load kprobe eBPF programs: %v", err)
 		}
@@ -997,11 +1061,12 @@ func (t *Tracer) loadBpfTrace(raw []byte, cpu int) *host.Trace {
 		TID:              libpf.PID(ptr.tid),
 		Origin:           libpf.Origin(ptr.origin),
 		OffTime:          int64(ptr.offtime),
+		MemAlloc:         uint64(ptr.mem_alloc),
 		KTime:            times.KTime(ptr.ktime),
 		CPU:              cpu,
 	}
 
-	if trace.Origin != support.TraceOriginSampling && trace.Origin != support.TraceOriginOffCPU {
+	if trace.Origin != support.TraceOriginSampling && trace.Origin != support.TraceOriginOffCPU && trace.Origin != support.TraceOriginHeap {
 		log.Warnf("Skip handling trace from unexpected %d origin", trace.Origin)
 		return nil
 	}
@@ -1044,6 +1109,9 @@ func (t *Tracer) loadBpfTrace(raw []byte, cpu int) *host.Trace {
 			Type:          libpf.FrameType(rawFrame.kind),
 			ReturnAddress: rawFrame.return_address != 0,
 		}
+	}
+	if trace.Origin == support.TraceOriginHeap {
+		log.Infof("trace: %v", trace)
 	}
 	return trace
 }
@@ -1295,6 +1363,22 @@ func (t *Tracer) StartProbabilisticProfiling(ctx context.Context) {
 	periodiccaller.Start(ctx, t.probabilisticInterval, func() {
 		t.probabilisticProfile(t.probabilisticInterval, t.probabilisticThreshold)
 	})
+}
+
+// StartMemProfiling starts off-cpu profiling by attaching the programs to the hooks.
+func (t *Tracer) StartMemProfiling(execute string) error {
+	t.AttachUProbes(execute, "malloc", false, true)
+	t.AttachUProbes(execute, "calloc", false, true)
+	t.AttachUProbes(execute, "realloc", false, true)
+	t.AttachUProbes(execute, "mmap", true, true) // failed on jemalloc
+	t.AttachUProbes(execute, "posix_memalign", false, true)
+	t.AttachUProbes(execute, "valloc", true, true) // failed on Android, is deprecated in libc.so from bionic directory
+	t.AttachUProbes(execute, "memalign", false, true)
+	t.AttachUProbes(execute, "pvalloc", true, true)       // failed on Android, is deprecated in libc.so from bionic directory
+	t.AttachUProbes(execute, "aligned_alloc", true, true) // added in C11
+	t.AttachUProbes(execute, "free", false, false)
+	t.AttachUProbes(execute, "munmap", true, false) // failed on jemalloc
+	return nil
 }
 
 // StartOffCPUProfiling starts off-cpu profiling by attaching the programs to the hooks.

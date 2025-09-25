@@ -59,8 +59,7 @@ func NewCollector(cfg *Config, nextConsumer xconsumer.Profiles) (*CollectorRepor
 	}
 
 	originsMap := make(map[libpf.Origin]samples.KeyToEventMapping, 2)
-	for _, origin := range []libpf.Origin{support.TraceOriginSampling,
-		support.TraceOriginOffCPU} {
+	for _, origin := range []libpf.Origin{support.TraceOriginSampling, support.TraceOriginOffCPU, support.TraceOriginHeap} {
 		originsMap[origin] = make(samples.KeyToEventMapping)
 	}
 

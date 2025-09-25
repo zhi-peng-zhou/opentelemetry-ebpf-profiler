@@ -129,6 +129,7 @@ func (m *traceHandler) HandleTrace(bpfTrace *host.Trace) {
 		ExecutablePath: bpfTrace.ExecutablePath,
 		Origin:         bpfTrace.Origin,
 		OffTime:        bpfTrace.OffTime,
+		MemAlloc:       int64(bpfTrace.MemAlloc),
 	}
 
 	if !m.reporter.SupportsReportTraceEvent() {

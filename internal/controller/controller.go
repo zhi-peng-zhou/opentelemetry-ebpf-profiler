@@ -87,6 +87,7 @@ func (c *Controller) Start(ctx context.Context) error {
 		ProbabilisticThreshold: c.config.ProbabilisticThreshold,
 		OffCPUThreshold:        uint32(c.config.OffCPUThreshold),
 		TargetPIDs:             c.config.TargetPIDs,
+		MemProfile:             c.config.MemProfile,
 	})
 	if err != nil {
 		c.reporter.Stop()
@@ -114,6 +115,10 @@ func (c *Controller) Start(ctx context.Context) error {
 			return fmt.Errorf("failed to start off-cpu profiling: %v", err)
 		}
 		log.Printf("Enabled off-cpu profiling")
+	}
+
+	if c.config.MemProfile { // todo
+		trc.StartMemProfiling("")
 	}
 
 	if c.config.ProbabilisticThreshold < tracer.ProbabilisticThresholdMax {

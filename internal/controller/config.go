@@ -38,6 +38,7 @@ type Config struct {
 	// IPAddress is the IP address of the host that sends data to CollAgentAddr.
 	IPAddress       string
 	OffCPUThreshold uint
+	MemProfile      bool
 
 	Reporter reporter.Reporter
 

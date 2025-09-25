@@ -337,6 +337,7 @@ typedef enum TraceOrigin {
   TRACE_UNKNOWN,
   TRACE_SAMPLING,
   TRACE_OFF_CPU,
+  TRACE_HEAP_ALLOC,
 } TraceOrigin;
 
 // OFF_CPU_THRESHOLD_MAX defines the maximum threshold.
@@ -551,6 +552,9 @@ typedef struct Trace {
   // offtime stores the nanoseconds that the trace was off-cpu for.
   u64 offtime;
 
+  // bytes allocated
+  u64 mem_alloc;
+
   // The frames of the stack trace.
   Frame frames[MAX_FRAME_UNWINDS];
 
@@ -717,7 +721,7 @@ typedef struct PerCPURecord {
 } PerCPURecord;
 
 // UnwindInfo contains the unwind information needed to unwind one frame
-// from a specific address.
+// from a specific address.`
 typedef struct UnwindInfo {
   u8 opcode;      // main opcode to unwind CFA
   u8 fpOpcode;    // opcode to unwind FP
