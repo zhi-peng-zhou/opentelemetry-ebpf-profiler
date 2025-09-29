@@ -163,7 +163,6 @@ static inline __attribute__((__always_inline__)) int alloc_enter(struct pt_regs 
         printt("Py_Malloc_enter：key_py_realloc %d", 1);
         return 0;
     }
-    u32 tid = bpf_get_current_pid_tgid();
     u64 s = size;
     u64 key = (u64)type_index << 32 | tid;
     bpf_map_update_elem(&size_record, &key, &s, BPF_ANY);
@@ -191,7 +190,7 @@ static inline __attribute__((__always_inline__)) u64 alloc_exit2(struct pt_regs 
     u64 ts = bpf_ktime_get_ns();
     bpf_map_update_elem(&alloc_infos, &address, size64, BPF_ANY);
     printt("alloc_exit2 address: %llu, type: %u",address, type_index);
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, *size64);
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, *size64, address);
 }
 
 static inline __attribute__((__always_inline__)) int alloc_exit(struct pt_regs *ctx, u32 type_index) {
@@ -209,7 +208,7 @@ static inline __attribute__((__always_inline__)) u64 free_entry(struct pt_regs *
     bpf_map_delete_elem(&alloc_infos, &addr);
     u64 ts = bpf_ktime_get_ns();
     printt("free_entry address: %llu, size: %lu",addr, *s);
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, *s);
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 0, *s, addr);
 }
 
 

@@ -1062,6 +1062,7 @@ func (t *Tracer) loadBpfTrace(raw []byte, cpu int) *host.Trace {
 		Origin:           libpf.Origin(ptr.origin),
 		OffTime:          int64(ptr.offtime),
 		MemAlloc:         uint64(ptr.mem_alloc),
+		MemAddr:          uint64(ptr.mem_addr),
 		KTime:            times.KTime(ptr.ktime),
 		CPU:              cpu,
 	}

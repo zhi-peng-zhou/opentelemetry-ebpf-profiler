@@ -555,6 +555,9 @@ typedef struct Trace {
   // bytes allocated
   u64 mem_alloc;
 
+  // mem_addr
+  u64 mem_addr;
+
   // The frames of the stack trace.
   Frame frames[MAX_FRAME_UNWINDS];
 

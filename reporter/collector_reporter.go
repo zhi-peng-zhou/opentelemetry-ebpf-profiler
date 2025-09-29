@@ -75,6 +75,7 @@ func NewCollector(cfg *Config, nextConsumer xconsumer.Profiles) (*CollectorRepor
 			runLoop: &runLoop{
 				stopSignal: make(chan libpf.Void),
 			},
+			addrToAllocMap: make(map[int64]libpf.TraceHash),
 		},
 		nextConsumer: nextConsumer,
 	}, nil

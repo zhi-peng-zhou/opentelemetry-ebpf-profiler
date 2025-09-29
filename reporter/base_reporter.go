@@ -40,6 +40,8 @@ type baseReporter struct {
 
 	// hostmetadata stores metadata that is sent out with every request.
 	hostmetadata *lru.SyncedLRU[string, string]
+
+	addrToAllocMap map[int64]libpf.TraceHash
 }
 
 func (b *baseReporter) Stop() {
@@ -106,15 +108,30 @@ func (b *baseReporter) ReportTraceEvent(trace *libpf.Trace, meta *samples.TraceE
 	if b.cfg.ExtraSampleAttrProd != nil {
 		extraMeta = b.cfg.ExtraSampleAttrProd.CollectExtraSampleMeta(trace, meta)
 	}
+	keyHash := trace.Hash
+	if meta.MemAlloc > 0 && meta.MemAddr > 0 {
+		if meta.OffTime == 1 { // mem-alloc
+			b.addrToAllocMap[meta.MemAddr] = keyHash
+		}
+		if meta.OffTime == 0 { // mem-free
+			extraMeta = uint64(meta.PID.Hash32()<<32) | uint64(meta.TID.Hash32()) // this from cloudcapture
+			allocHash, ok := b.addrToAllocMap[meta.MemAddr]
+			if !ok {
+				return
+			}
+			keyHash = allocHash
+		}
+	}
 
 	containerID, err := libpf.LookupCgroupv2(b.cgroupv2ID, meta.PID)
 	if err != nil {
 		log.Tracef("Failed to get a cgroupv2 ID as container ID for PID %d: %v",
 			meta.PID, err)
 	}
-
+	// 在这里将free对应的栈帧映射到分配这块内存的栈帧。我们其实不需要分配内存的栈帧，只需要知道这块内存大小是多少
+	// 地址是多少（根据内存地址找分配他的栈帧）
 	key := samples.TraceAndMetaKey{
-		Hash:           trace.Hash,
+		Hash:           keyHash,
 		Comm:           meta.Comm,
 		ProcessName:    meta.ProcessName,
 		ExecutablePath: meta.ExecutablePath,

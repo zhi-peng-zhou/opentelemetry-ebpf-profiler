@@ -16,6 +16,7 @@ type TraceEventMeta struct {
 	Origin         libpf.Origin
 	OffTime        int64
 	MemAlloc       int64 // bytes
+	MemAddr        int64
 }
 
 // TraceEvents holds known information about a trace.

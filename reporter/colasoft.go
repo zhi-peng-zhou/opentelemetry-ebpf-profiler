@@ -85,7 +85,7 @@ func (c *ColaSoft) Start(parent context.Context) error {
 func (c *ColaSoft) reportProfile(ctx context.Context) error {
 	traceEvents := c.traceEvents.WLock()
 	var mappings = make(map[libpf.Origin]samples.KeyToEventMapping)
-	for _, origin := range []libpf.Origin{support.TraceOriginSampling, support.TraceOriginOffCPU} {
+	for _, origin := range []libpf.Origin{support.TraceOriginSampling, support.TraceOriginOffCPU, support.TraceOriginHeap} {
 		mappings[origin] = maps.Clone((*traceEvents)[origin])
 		clear((*traceEvents)[origin])
 	}
@@ -105,6 +105,7 @@ func (c *ColaSoft) reportProfile(ctx context.Context) error {
 				if _traceEvents, ok := events[pid][kind][key]; ok {
 					_traceEvents.Timestamps = append(_traceEvents.Timestamps, value.Timestamps...)
 					_traceEvents.OffTimes = append(_traceEvents.OffTimes, value.OffTimes...)
+					_traceEvents.MemAlloc = append(_traceEvents.MemAlloc, value.MemAlloc...)
 				} else {
 					events[pid][kind][key] = value
 				}
