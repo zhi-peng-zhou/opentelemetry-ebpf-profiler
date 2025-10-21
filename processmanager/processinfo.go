@@ -225,6 +225,11 @@ func (pm *ProcessManager) handleNewMapping(pr process.Process, m *Mapping,
 	if err != nil {
 		return err
 	}
+	// todo handle memprofile
+	log.Infof("ei.LanVer: %s", ei.LanVer)
+	if ei.Data != nil {
+		log.Infof("ei.Data: %s", ei.Data)
+	}
 
 	pid := pr.PID()
 

@@ -9,8 +9,10 @@ package elfunwindinfo // import "github.com/toliu/opentelemetry-ebpf-profiler/na
 
 import (
 	"bytes"
+	"debug/buildinfo"
 	"debug/elf"
 	"fmt"
+	"strings"
 	"unsafe"
 
 	log "github.com/sirupsen/logrus"
@@ -40,6 +42,7 @@ const (
 	// pclntabHeader magic identifying Go version
 	magicGo1_2  = 0xfffffffb
 	magicGo1_16 = 0xfffffffa
+	magicGo1_17 = 0xfffffffa
 	magicGo1_18 = 0xfffffff0
 	magicGo1_20 = 0xfffffff1
 )
@@ -332,9 +335,21 @@ func SearchGoPclntab(ef *pfelf.File) ([]byte, error) {
 	return nil, nil
 }
 
+func (ee *elfExtractor) parseGoVer() string {
+	if !ee.file.IsGolang() {
+		return ""
+	}
+	bi, err := buildinfo.ReadFile(ee.ref.FileName())
+	if err != nil {
+		return ""
+	}
+	return strings.TrimPrefix(bi.GoVersion, "Go cmd/compile")
+}
+
 // Parse Golang .gopclntab spdelta tables and try to produce minified intervals
 // by using large frame pointer ranges when possible
 func (ee *elfExtractor) parseGoPclntab() error {
+	ee.file.IsGolang()
 	var err error
 	var data []byte
 
