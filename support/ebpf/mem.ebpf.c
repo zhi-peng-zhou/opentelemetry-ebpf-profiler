@@ -717,13 +717,13 @@ int Py_Free_enter(struct pt_regs *ctx) {
 // func mallocgc(size uintptr, typ *_type, needzero bool) unsafe.Pointer {
 SEC("uprobe/mallocgc_register")
 int mallocgc_register_enter(struct pt_regs *ctx) {
-    u64 *size = (u64 *)PT_REGS_PARM1(ctx);
+    u64 size = (u64)PT_REGS_PARM1(ctx);
 
     u64 id  = bpf_get_current_pid_tgid();
     u32 tid = id & 0xFFFFFFFF;
     u32 pid = id >> 32;
     u64 ts = bpf_ktime_get_ns();
-    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, *size, 0);
+    return collect_trace(ctx, TRACE_HEAP_ALLOC, pid, tid, ts, 1, size, 0);
 }
 
 SEC("uprobe/mallocgc_stack")
