@@ -695,9 +695,9 @@ static inline __attribute__((__always_inline__)) bool should_trace_pid(u32 pid)
 static inline __attribute__((__always_inline__)) int collect_trace(
   struct pt_regs *ctx, TraceOrigin origin, u32 pid, u32 tid, u64 trace_timestamp, u64 off_cpu_time, u64 bytes_alloc, u64 mem_addr)
 {
-  if (!should_trace_pid(pid)) {
-      return 0;
-  }
+//  if (!should_trace_pid(pid)) {
+//      return 0;
+//  }
   // The trace is reused on each call to this function so we have to reset the
   // variables used to maintain state.
   DEBUG_PRINT("Resetting CPU record");

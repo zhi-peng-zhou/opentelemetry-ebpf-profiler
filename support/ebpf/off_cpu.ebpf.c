@@ -74,6 +74,10 @@ int finish_task_switch(struct pt_regs *ctx)
   u32 pid      = pid_tgid >> 32;
   u32 tid      = pid_tgid & 0xFFFFFFFF;
 
+  if (!should_trace_pid(pid)) {
+        return 0;
+  }
+
   if (pid == 0 || tid == 0) {
     return 0;
   }

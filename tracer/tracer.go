@@ -129,6 +129,9 @@ type Tracer struct {
 
 	// probabilisticThreshold holds the threshold for probabilistic profiling.
 	probabilisticThreshold uint
+
+	memProfilingPids   []libpf.PID
+	pidsToMemProfiling []libpf.PID
 }
 
 type Config struct {
@@ -544,12 +547,20 @@ func initializeMapsAndPrograms(kernelSymbols *libpf.SymbolMap, cfg *Config) (
 			"PyMem_Free_enter",
 		}
 
+		goProgs := []string{
+			"mallocgc_stack_enter",
+			"mallocgc_register_enter",
+		}
+
 		//var uProgs []progLoaderHelper
-		uProgs := make([]progLoaderHelper, len(cprogss))
+		uProgs := make([]progLoaderHelper, len(cprogss)+len(goProgs)+len(py_progss))
 		for _, p := range cprogss {
 			uProgs = append(uProgs, progLoaderHelper{name: p, noTailCallTarget: true, enable: true})
 		}
 		for _, p := range py_progss {
+			uProgs = append(uProgs, progLoaderHelper{name: p, noTailCallTarget: true, enable: true})
+		}
+		for _, p := range goProgs {
 			uProgs = append(uProgs, progLoaderHelper{name: p, noTailCallTarget: true, enable: true})
 		}
 
@@ -1367,18 +1378,7 @@ func (t *Tracer) StartProbabilisticProfiling(ctx context.Context) {
 }
 
 // StartMemProfiling starts off-cpu profiling by attaching the programs to the hooks.
-func (t *Tracer) StartMemProfiling(execute string) error {
-	t.AttachUProbes(execute, "malloc", false, true)
-	t.AttachUProbes(execute, "calloc", false, true)
-	t.AttachUProbes(execute, "realloc", false, true)
-	t.AttachUProbes(execute, "mmap", true, true) // failed on jemalloc
-	t.AttachUProbes(execute, "posix_memalign", false, true)
-	t.AttachUProbes(execute, "valloc", true, true) // failed on Android, is deprecated in libc.so from bionic directory
-	t.AttachUProbes(execute, "memalign", false, true)
-	t.AttachUProbes(execute, "pvalloc", true, true)       // failed on Android, is deprecated in libc.so from bionic directory
-	t.AttachUProbes(execute, "aligned_alloc", true, true) // added in C11
-	t.AttachUProbes(execute, "free", false, false)
-	t.AttachUProbes(execute, "munmap", true, false) // failed on jemalloc
+func (t *Tracer) StartMemProfiling(execute string) error { // todo
 	return nil
 }
 

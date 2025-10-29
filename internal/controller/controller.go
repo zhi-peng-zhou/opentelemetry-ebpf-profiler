@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
+	"github.com/toliu/opentelemetry-ebpf-profiler/process"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -118,6 +119,7 @@ func (c *Controller) Start(ctx context.Context) error {
 	}
 
 	if c.config.MemProfile { // todo
+		trc.SyncMemProfile([]process.Process{})
 		trc.StartMemProfiling("")
 	}
 
