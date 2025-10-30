@@ -349,7 +349,6 @@ func (ee *elfExtractor) parseGoVer() string {
 // Parse Golang .gopclntab spdelta tables and try to produce minified intervals
 // by using large frame pointer ranges when possible
 func (ee *elfExtractor) parseGoPclntab() error {
-	ee.file.IsGolang()
 	var err error
 	var data []byte
 

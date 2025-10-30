@@ -130,8 +130,7 @@ type Tracer struct {
 	// probabilisticThreshold holds the threshold for probabilistic profiling.
 	probabilisticThreshold uint
 
-	memProfilingPids   []libpf.PID
-	pidsToMemProfiling []libpf.PID
+	memProfileHooks map[libpf.PID][]link.Link
 }
 
 type Config struct {
@@ -342,6 +341,7 @@ func NewTracer(ctx context.Context, cfg *Config) (*Tracer, error) {
 		samplesPerSecond:       cfg.SamplesPerSecond,
 		probabilisticInterval:  cfg.ProbabilisticInterval,
 		probabilisticThreshold: cfg.ProbabilisticThreshold,
+		memProfileHooks:        make(map[libpf.PID][]link.Link),
 	}, nil
 }
 
@@ -1308,7 +1308,7 @@ func (t *Tracer) AttachTracer() error {
 func (t *Tracer) EnableProfiling() error {
 	events := t.perfEntrypoints.WLock()
 	defer t.perfEntrypoints.WUnlock(&events)
-	if len(*events) == 0 {
+	if len(*events) == 0 && len(t.memProfileHooks) == 0 {
 		return errors.New("no perf events available to enable for profiling")
 	}
 	for id, event := range *events {
@@ -1375,11 +1375,6 @@ func (t *Tracer) StartProbabilisticProfiling(ctx context.Context) {
 	periodiccaller.Start(ctx, t.probabilisticInterval, func() {
 		t.probabilisticProfile(t.probabilisticInterval, t.probabilisticThreshold)
 	})
-}
-
-// StartMemProfiling starts off-cpu profiling by attaching the programs to the hooks.
-func (t *Tracer) StartMemProfiling(execute string) error { // todo
-	return nil
 }
 
 // StartOffCPUProfiling starts off-cpu profiling by attaching the programs to the hooks.

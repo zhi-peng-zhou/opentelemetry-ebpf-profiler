@@ -39,12 +39,14 @@ type Config struct {
 	IPAddress       string
 	OffCPUThreshold uint
 	MemProfile      bool
+	CpuProfile      bool
 
 	Reporter reporter.Reporter
 
 	Fs *flag.FlagSet
 
-	TargetPIDs []libpf.PID
+	TargetPIDs     []libpf.PID
+	MemProfilePIDs []libpf.PID
 }
 
 const (

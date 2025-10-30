@@ -5,8 +5,11 @@ import (
 	cebpf "github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
 	log "github.com/sirupsen/logrus"
+	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
 	"github.com/toliu/opentelemetry-ebpf-profiler/process"
+	"golang.org/x/exp/maps"
 	"runtime"
+	"slices"
 )
 
 // loadUProbeUnwinders reuses large parts of loadPerfUnwinders. By default all eBPF programs
@@ -83,7 +86,12 @@ func (t *Tracer) AttachUProbesWithProgPrefix(execute string, symbol string, prog
 		}
 		return
 	}
-	t.hooks[hookPoint{group: "uprobe", name: execute + ":" + symbol + ":" + prog}] = uprobeLink
+
+	_, exist := t.memProfileHooks[libpf.PID(pid)]
+	if !exist {
+		t.memProfileHooks[libpf.PID(pid)] = make([]link.Link, 0)
+	}
+	t.memProfileHooks[libpf.PID(pid)] = append(t.memProfileHooks[libpf.PID(pid)], uprobeLink)
 	if needUret {
 		retProg := symbol + "_exit"
 		if progPrefix != "" {
@@ -102,9 +110,20 @@ func (t *Tracer) AttachUProbesWithProgPrefix(execute string, symbol string, prog
 			}
 			return
 		}
-		t.hooks[hookPoint{group: "uprobe", name: execute + ":" + symbol + ":" + retProg}] = uRetProbeLink
+		t.memProfileHooks[libpf.PID(pid)] = append(t.memProfileHooks[libpf.PID(pid)], uRetProbeLink)
 	}
 	return
+}
+
+func (t *Tracer) detachMemProfile(pid libpf.PID) {
+	if links, ok := t.memProfileHooks[pid]; ok {
+		for _, link := range links {
+			if e := link.Close(); e != nil {
+				log.Errorf("failed to close memprofile link{ pid:%d, link:%v, err: %v", pid, link, e)
+			}
+		}
+	}
+	delete(t.memProfileHooks, pid)
 }
 
 // StartCLikeMemProfiling starts off-cpu profiling for c/c++/rust by attaching the programs to the hooks.
@@ -173,7 +192,7 @@ func (t *Tracer) TriggerMemProfile(p process.Process) bool {
 			}
 		case "Java":
 			if memProfileInfo.MajorVersion >= 11 && memProfileInfo.MinorVersion >= 0 { // after java 11
-				return true
+				return true // todo
 			}
 		case "go":
 			isRegister := true
@@ -198,9 +217,25 @@ func (t *Tracer) TriggerMemProfile(p process.Process) bool {
 	return false
 }
 
-func (t *Tracer) SyncMemProfile(pids []process.Process) {
+func (t *Tracer) SyncMemProfile(pids []libpf.PID) {
+	oldPids := maps.Keys(t.memProfileHooks)
+	var removePids []libpf.PID
+	for _, oldP := range oldPids {
+		if slices.Contains(pids, oldP) {
+			continue
+		}
+		t.detachMemProfile(oldP)
+		removePids = append(removePids, oldP)
+	}
+	for _, pid := range removePids {
+		delete(t.memProfileHooks, pid)
+	}
 	for _, p := range pids {
-		t.processManager.SynchronizeProcess(p)
-		t.TriggerMemProfile(p)
+		if _, exist := t.memProfileHooks[p]; exist {
+			continue
+		}
+		proc := process.New(p)
+		t.processManager.SynchronizeProcess(proc)
+		t.TriggerMemProfile(proc)
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
-	"github.com/toliu/opentelemetry-ebpf-profiler/process"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -104,23 +103,23 @@ func (c *Controller) Start(ctx context.Context) error {
 	metrics.Add(metrics.IDProcPIDStartupMs, metrics.MetricValue(time.Since(now).Milliseconds()))
 	log.Trace("Completed initial PID listing")
 
-	// Attach our tracer to the perf event
-	if err := trc.AttachTracer(); err != nil {
-		return fmt.Errorf("failed to attach to perf event: %w", err)
-	}
-	log.Trace("Attached tracer program")
-
-	if c.config.OffCPUThreshold > 0 {
-		if err := trc.StartOffCPUProfiling(); err != nil {
-			c.reporter.Stop()
-			return fmt.Errorf("failed to start off-cpu profiling: %v", err)
+	if c.config.CpuProfile {
+		// Attach our tracer to the perf event
+		if err := trc.AttachTracer(); err != nil {
+			return fmt.Errorf("failed to attach to perf event: %w", err)
 		}
-		log.Printf("Enabled off-cpu profiling")
+		log.Trace("Attached tracer program")
+		if c.config.OffCPUThreshold > 0 {
+			if err := trc.StartOffCPUProfiling(); err != nil {
+				c.reporter.Stop()
+				return fmt.Errorf("failed to start off-cpu profiling: %v", err)
+			}
+			log.Printf("Enabled off-cpu profiling")
+		}
 	}
 
-	if c.config.MemProfile { // todo
-		trc.SyncMemProfile([]process.Process{})
-		trc.StartMemProfiling("")
+	if c.config.MemProfile {
+		trc.SyncMemProfile(c.config.MemProfilePIDs)
 	}
 
 	if c.config.ProbabilisticThreshold < tracer.ProbabilisticThresholdMax {

@@ -161,6 +161,7 @@ func (pm *ProcessManager) setProcessMemProfileMeta(lanVer string, pid libpf.PID)
 		}
 	} else {
 		if strings.HasPrefix(lanVer, "go") {
+			lan = "go"
 			verStr := strings.TrimPrefix(lanVer, "go")
 			if ver := strings.Split(verStr, "."); len(ver) > 1 {
 				major, _ = strconv.Atoi(ver[0])
