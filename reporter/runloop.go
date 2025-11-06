@@ -5,6 +5,7 @@ package reporter // import "github.com/toliu/opentelemetry-ebpf-profiler/reporte
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/toliu/opentelemetry-ebpf-profiler/libpf"
@@ -14,6 +15,7 @@ import (
 type runLoop struct {
 	// stopSignal is the stop signal for shutting down all background tasks.
 	stopSignal chan libpf.Void
+	once       sync.Once
 }
 
 func (rl *runLoop) Start(ctx context.Context, reportInterval time.Duration, run, purge func()) {
@@ -40,5 +42,7 @@ func (rl *runLoop) Start(ctx context.Context, reportInterval time.Duration, run,
 }
 
 func (rl *runLoop) Stop() {
-	close(rl.stopSignal)
+	rl.once.Do(func() { // agent 可能会重复调用stop,有概率触发这个
+		close(rl.stopSignal)
+	})
 }
