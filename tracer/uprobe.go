@@ -205,7 +205,7 @@ func (t *Tracer) TriggerMemProfile(p process.Process) error {
 		case libpf.Golang:
 			startProfiling = t.StartGolangMemProfiling
 			execPath = memProfileInfo.ExecAbsPath
-		case libpf.UnknownInterp, libpf.Dotnet, libpf.PHP, libpf.PHPJIT, libpf.Ruby, libpf.Perl, libpf.V8:
+		case libpf.Kernel, libpf.UnknownInterp, libpf.Dotnet, libpf.PHP, libpf.PHPJIT, libpf.Ruby, libpf.Perl, libpf.V8:
 			log.Debugf("unsupported memprofilin interpreter type: %s", memProfileInfo.Lang)
 			return nil
 		default:
