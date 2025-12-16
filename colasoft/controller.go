@@ -23,13 +23,13 @@ type (
 func NewCollector(sr SymbolReporter) *Collector { return &Collector{sr: sr} }
 
 func (c *Collector) Start(ctx context.Context, freq, offCpuThreshold int, interval time.Duration,
-	cpuProfileTargetPids []libpf.PID, cacheEventSTolerance int,
-	cacheEventSTimeout time.Duration, memProfile bool, cpuProfile bool, memProfilePids []libpf.PID,
+	targetPids map[libpf.PID]struct{}, cacheEventSTolerance int, cacheEventSTimeout time.Duration,
 	memProfileBlock uint64) error {
 	if c.cfg != nil {
 		if c.cfg.ReporterInterval == interval &&
 			c.cfg.SamplesPerSecond == freq &&
-			c.cfg.OffCPUThreshold == uint(offCpuThreshold) {
+			c.cfg.OffCPUThreshold == uint(offCpuThreshold) &&
+			c.cfg.MemProfileBlock == memProfileBlock {
 			return nil
 		}
 		c.Stop()
@@ -47,10 +47,7 @@ func (c *Collector) Start(ctx context.Context, freq, offCpuThreshold int, interv
 		ReporterInterval:       interval, SamplesPerSecond: freq, Reporter: rpt,
 		Tracers:         "perl,php,python,hotspot,ruby,v8",
 		OffCPUThreshold: uint(offCpuThreshold),
-		TargetPIDs:      cpuProfileTargetPids,
-		MemProfile:      memProfile,
-		CpuProfile:      cpuProfile,
-		MemProfilePIDs:  memProfilePids,
+		TargetPIDs:      targetPids,
 		MemProfileBlock: memProfileBlock,
 	}
 	ctrl := controller.New(cfg)
@@ -72,12 +69,8 @@ func (c *Collector) Stop() {
 	}
 }
 
-func (c *Collector) SyncTargetPIDs(targetPIds []libpf.PID) error {
+func (c *Collector) SyncTargetPIDs(targetPIds map[libpf.PID]struct{}) error {
 	return c.ctrl.SyncTargetPIDs(targetPIds)
-}
-
-func (c *Collector) SyncMemProfileTargetPids(targetPIds []libpf.PID) error {
-	return c.ctrl.SyncMemProfileTargetPIDs(targetPIds)
 }
 
 func (c *Collector) SyncMemProfileBlock(memProfileBlock uint64) error {
